@@ -1,0 +1,65 @@
+<!--
+  Projeto: Imprensa Jovem P.M.A
+  Prof. Sidney Cambauva
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07142b">
+  <title>TV - Imprensa Jovem P.M.A</title>
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tv.css">
+</head>
+<body>
+  <main class="tv-app">
+    <header class="tv-header">
+      <div class="tv-brand">
+        <div class="tv-brand__mark" id="tvLogo">P.M.A</div>
+        <div>
+          <h1 id="tvTitle">IMPRENSA JOVEM CAPITÃO</h1>
+          <p id="tvSubtitle">Informação, educação e protagonismo estudantil</p>
+        </div>
+      </div>
+      <div class="tv-status">
+        <span class="tv-live"><i></i> AO VIVO</span>
+        <time id="tvClock">00:00</time>
+      </div>
+    </header>
+
+    <section class="tv-stage" aria-label="Carrossel de notícias">
+      <a class="tv-stage__story" id="tvStory" target="_blank" rel="noopener noreferrer">
+        <img id="tvImage" alt="Imagem da notícia em destaque">
+        <video id="tvVideo" autoplay muted loop playsinline preload="metadata"></video>
+        <div id="tvEmbed" aria-label="Vídeo em destaque"></div>
+        <div class="tv-stage__overlay">
+          <span class="tv-stage__tag" id="tvTag">DESTAQUE</span>
+          <h2 id="tvNewsTitle">Imprensa Jovem P.M.A</h2>
+          <p id="tvSummary">Acompanhe as principais notícias da escola.</p>
+        </div>
+      </a>
+
+      <div class="tv-stage__navigation" aria-label="Controles do carrossel">
+        <button class="tv-stage__control" id="tvPrevious" type="button" aria-label="Notícia anterior" title="Notícia anterior">&larr;</button>
+        <button class="tv-stage__control" id="tvNext" type="button" aria-label="Próxima notícia" title="Próxima notícia">&rarr;</button>
+      </div>
+      <button class="tv-stage__sound" id="tvSound" type="button" aria-label="Ativar som" aria-pressed="false" title="Ativar som" hidden>&#128263;</button>
+      <div class="tv-stage__dots" id="tvDots" aria-hidden="true"></div>
+    </section>
+
+    <footer class="tv-ticker">
+      <span class="tv-ticker__label">NOTÍCIAS</span>
+      <span class="tv-ticker__track" id="tvTicker">Carregando notícias...</span>
+    </footer>
+  </main>
+
+  <script src="js/base-path.js"></script>
+  <script src="socket.io/socket.io.js"></script>
+  <script src="js/tv.js"></script>
+</body>
+</html>

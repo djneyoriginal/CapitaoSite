@@ -1,0 +1,16 @@
+[Unit]
+Description=SIX Intranet
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/six
+ExecStart=/usr/bin/node src/server.js
+Restart=always
+RestartSec=3
+Environment=NODE_ENV=production
+User=ec2-user
+Group=ec2-user
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conheça nosso patrono | Capitão Técnico</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/assets/logo-capitao-tecnico.svg">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #101828;
+      --muted: #536173;
+      --paper: #ffffff;
+      --line: #d8e2ee;
+      --blue: #1769e0;
+      --teal: #00a38a;
+      --lime: #d9f24f;
+      --coral: #ff6b5f;
+      --navy: #10213f;
+      --soft: #f4f8fb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(23, 105, 224, 0.14), transparent 34%),
+        linear-gradient(315deg, rgba(0, 163, 138, 0.13), transparent 30%),
+        var(--soft);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .topbar {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      font-weight: 800;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      flex: 0 0 auto;
+    }
+
+    .brand-mark img {
+      width: 48px;
+      height: 48px;
+      display: block;
+    }
+
+    .brand-text {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .brand-text strong,
+    .brand-text span {
+      overflow-wrap: anywhere;
+    }
+
+    .brand-text span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    nav a,
+    .button {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-weight: 900;
+    }
+
+    nav a {
+      padding: 0 13px;
+      border: 1px solid rgba(16, 33, 63, 0.14);
+      color: var(--navy);
+      background: rgba(255, 255, 255, 0.72);
+      font-size: 14px;
+    }
+
+    main {
+      padding-bottom: 48px;
+    }
+
+    .hero {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      min-height: calc(100vh - 96px);
+      display: grid;
+      grid-template-columns: 1fr 0.88fr;
+      align-items: center;
+      gap: 42px;
+      padding: 34px 0 50px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 18px;
+      color: var(--blue);
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .spark {
+      width: 34px;
+      height: 10px;
+      background:
+        linear-gradient(90deg, var(--coral) 0 28%, transparent 28% 36%, var(--teal) 36% 64%, transparent 64% 72%, var(--lime) 72%);
+      border-radius: 3px;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 780px;
+      font-size: 64px;
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 680px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: 21px;
+      line-height: 1.55;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .button {
+      gap: 10px;
+      min-height: 50px;
+      padding: 0 18px;
+      line-height: 1.2;
+    }
+
+    .button svg {
+      width: 19px;
+      height: 19px;
+      flex: 0 0 auto;
+    }
+
+    .primary {
+      color: #ffffff;
+      background: var(--blue);
+      box-shadow: 0 12px 26px rgba(23, 105, 224, 0.24);
+    }
+
+    .secondary {
+      color: var(--navy);
+      border: 1px solid var(--line);
+      background: var(--paper);
+    }
+
+    .portrait {
+      position: relative;
+      min-height: 500px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(16, 33, 63, 0.12);
+      background:
+        radial-gradient(circle at 70% 18%, rgba(217, 242, 79, 0.96) 0 68px, transparent 69px),
+        linear-gradient(145deg, var(--navy), #17406f 58%, var(--teal));
+      box-shadow: 0 28px 70px rgba(16, 33, 63, 0.18);
+    }
+
+    .portrait::before {
+      content: "";
+      position: absolute;
+      inset: 48px 54px auto;
+      height: 250px;
+      border: 4px solid rgba(255, 255, 255, 0.52);
+      border-radius: 50% 50% 46% 46%;
+      background:
+        radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.88) 0 34px, transparent 35px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04));
+    }
+
+    .portrait::after {
+      content: "";
+      position: absolute;
+      left: 70px;
+      right: 70px;
+      bottom: 68px;
+      height: 158px;
+      border-radius: 8px 8px 0 0;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: inset 0 18px 0 var(--coral);
+    }
+
+    .badge {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      bottom: 28px;
+      z-index: 2;
+      display: grid;
+      gap: 8px;
+      padding: 18px;
+      border-radius: 8px;
+      color: var(--navy);
+      background: var(--lime);
+      box-shadow: 0 18px 38px rgba(16, 33, 63, 0.18);
+    }
+
+    .badge strong {
+      font-size: 18px;
+    }
+
+    .badge span {
+      color: rgba(16, 33, 63, 0.74);
+      line-height: 1.45;
+    }
+
+    .section {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 52px 0;
+    }
+
+    .section-title {
+      display: grid;
+      gap: 12px;
+      max-width: 760px;
+      margin-bottom: 24px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 34px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .section-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.55;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .card,
+    .note,
+    .source-list {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 0 14px 36px rgba(16, 33, 63, 0.08);
+    }
+
+    .card {
+      min-height: 220px;
+      padding: 22px;
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #ffffff;
+      background: var(--teal);
+    }
+
+    .card:nth-child(2) .card-icon {
+      background: var(--coral);
+    }
+
+    .card:nth-child(3) .card-icon {
+      background: var(--blue);
+    }
+
+    .card-icon svg {
+      width: 23px;
+      height: 23px;
+    }
+
+    .card strong {
+      display: block;
+      margin: 16px 0 10px;
+      color: var(--navy);
+      font-size: 19px;
+    }
+
+    .card p,
+    .note p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .legacy {
+      display: grid;
+      grid-template-columns: 0.82fr 1.18fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .note {
+      padding: 24px;
+      background: var(--navy);
+      color: #ffffff;
+    }
+
+    .note h2 {
+      margin: 0 0 12px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+
+    .note p {
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 16px;
+      align-items: start;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+
+    .timeline-number {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: var(--navy);
+      background: var(--lime);
+      font-weight: 900;
+    }
+
+    .timeline-item strong {
+      display: block;
+      margin: 2px 0 6px;
+      color: var(--navy);
+      font-size: 18px;
+    }
+
+    .timeline-item p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .source-list {
+      display: grid;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .source-list a {
+      display: grid;
+      gap: 5px;
+      padding: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .source-list a:first-child {
+      border-top: 0;
+    }
+
+    .source-list strong {
+      color: var(--navy);
+    }
+
+    .source-list span {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .cta-band {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px;
+      border-radius: 8px;
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--blue), #17406f 62%, var(--teal));
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .cta-band h2 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    .cta-band p {
+      margin: 0;
+      max-width: 720px;
+      color: rgba(255, 255, 255, 0.84);
+      line-height: 1.55;
+    }
+
+    .cta-band .button {
+      color: var(--navy);
+      background: var(--lime);
+      white-space: nowrap;
+    }
+
+    footer {
+      width: min(1120px, calc(100% - 32px));
+      margin: 34px auto 0;
+      padding: 22px 0 34px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .topbar,
+      .hero,
+      .section,
+      .cta-band {
+        width: min(100% - 24px, 720px);
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      nav {
+        justify-content: flex-start;
+      }
+
+      .hero,
+      .legacy,
+      .cta-band {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 22px;
+      }
+
+      h1 {
+        font-size: 48px;
+      }
+
+      .lead {
+        font-size: 19px;
+      }
+
+      .portrait {
+        min-height: 430px;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .cta-band .button {
+        justify-self: start;
+      }
+    }
+
+    @media (max-width: 560px) {
+      nav a {
+        flex: 1 1 auto;
+      }
+
+      h1 {
+        font-size: 38px;
+      }
+
+      .actions .button {
+        width: 100%;
+      }
+
+      .portrait::before {
+        inset: 40px 36px auto;
+      }
+
+      .portrait::after {
+        left: 44px;
+        right: 44px;
+      }
+
+      .timeline-item {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Página inicial da Capitão Técnico">
+      <span class="brand-mark" aria-hidden="true">
+        <img src="/assets/logo-capitao-tecnico.svg" alt="">
+      </span>
+      <span class="brand-text">
+        <strong>Capitão Técnico</strong>
+        <span>Escola Capitão Pedro Monteiro do Amaral</span>
+      </span>
+    </a>
+
+    <nav aria-label="Navegação principal">
+      <a href="/">Início</a>
+      <a href="/historia/">História da escola</a>
+      <a href="/imprensa/">Imprensa</a>
+      <a href="#fontes">Fontes</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-label="Homenagem ao patrono">
+      <div>
+        <p class="eyebrow"><span class="spark" aria-hidden="true"></span> Conheça nosso patrono</p>
+        <h1>Capitão Pedro Monteiro do Amaral</h1>
+        <p class="lead">O nome que identifica nossa escola também inspira uma ideia de compromisso: aprender com coragem, servir à comunidade e construir caminhos para o futuro.</p>
+        <div class="actions">
+          <a class="button primary" href="#legado">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3l3 6 6 .9-4.5 4.3 1.1 6.1L12 17.4l-5.6 2.9 1.1-6.1L3 9.9 9 9l3-6z"></path>
+            </svg>
+            Ver homenagem
+          </a>
+          <a class="button secondary" href="/">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 12l9-9 9 9"></path>
+              <path d="M5 10v10h14V10"></path>
+            </svg>
+            Voltar para a home
+          </a>
+        </div>
+      </div>
+
+      <div class="portrait" aria-hidden="true">
+        <div class="badge">
+          <strong>Memória que vira presença</strong>
+          <span>O patrono permanece vivo quando a escola transforma seu nome em estudo, respeito e participação.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="legado" aria-label="Legado do patrono">
+      <div class="section-title">
+        <h2>O que um patrono representa</h2>
+        <p>Mesmo quando a biografia completa não está disponível nas fontes públicas abertas, o patrono funciona como referência de identidade para a comunidade escolar.</p>
+      </div>
+
+      <div class="cards">
+        <article class="card">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l9 5-9 5-9-5 9-5z"></path>
+              <path d="M3 12l9 5 9-5"></path>
+              <path d="M3 17l9 5 9-5"></path>
+            </svg>
+          </span>
+          <strong>Identidade</strong>
+          <p>O nome Capitão Pedro Monteiro do Amaral marca a história da escola e cria um elo entre passado, presente e futuro.</p>
+        </article>
+
+        <article class="card">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+            </svg>
+          </span>
+          <strong>Estudo</strong>
+          <p>A homenagem ganha sentido quando cada estudante encontra no conhecimento uma forma de participar do mundo.</p>
+        </article>
+
+        <article class="card">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-8 0v2"></path>
+              <path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </span>
+          <strong>Comunidade</strong>
+          <p>A escola honra seu patrono quando acolhe diferenças, incentiva protagonismo e aproxima famílias, estudantes e bairro.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-label="A escola hoje">
+      <div class="legacy">
+        <article class="note">
+          <h2>Do nome ao cotidiano</h2>
+          <p>A melhor homenagem a um patrono é fazer a escola acontecer todos os dias: em sala, nos laboratórios, nos projetos, nos encontros com a comunidade e nas escolhas que abrem futuro para os estudantes.</p>
+        </article>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <span class="timeline-number">01</span>
+            <div>
+              <strong>Escola estadual na Zona Norte</strong>
+              <p>A Secretaria da Educação registra a unidade como EE Pedro Monteiro do Amaral, Capitão, vinculada à Diretoria de Ensino Centro, no Jardim São Bento, em São Paulo.</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <span class="timeline-number">02</span>
+            <div>
+              <strong>Ensino técnico integrado</strong>
+              <p>O portal Transparência Educação registra oferta de Novotec Integrado, unindo Ensino Médio e formação técnica.</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <span class="timeline-number">03</span>
+            <div>
+              <strong>Protagonismo estudantil</strong>
+              <p>Em atividade do Tribunal de Contas do Município de São Paulo, estudantes do ensino médio técnico participaram de uma experiência sobre cidadania e controle social.</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <span class="timeline-number">04</span>
+            <div>
+              <strong>Espírito Capitão</strong>
+              <p>O site da escola apresenta valores de acolhimento, tolerância, seriedade educativa e protagonismo dos estudantes na transformação de sua realidade.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="fontes" aria-label="Fontes consultadas">
+      <div class="section-title">
+        <h2>Fontes consultadas</h2>
+        <p>Esta homenagem foi construída a partir de informações públicas sobre a escola e sua comunidade. A biografia completa do patrono não foi encontrada em fonte pública aberta durante a pesquisa.</p>
+      </div>
+
+      <div class="source-list">
+        <a href="https://transparencia.educacao.sp.gov.br/Home/DetalhesEscola?codesc=322" target="_blank" rel="noopener">
+          <strong>Transparência Educação - SEDUC-SP</strong>
+          <span>Nome oficial da escola, endereço, Diretoria de Ensino, dados de estudantes e oferta de Novotec Integrado.</span>
+        </a>
+        <a href="https://escolacapitao.wixsite.com/capitao" target="_blank" rel="noopener">
+          <strong>Capitão Online</strong>
+          <span>Apresentação institucional da escola, com destaque para acolhimento, tolerância, seriedade educativa e protagonismo.</span>
+        </a>
+        <a href="https://fida.tcm.sp.gov.br/Pagina/81891" target="_blank" rel="noopener">
+          <strong>Tribunal de Contas do Município de São Paulo</strong>
+          <span>Registro de participação de estudantes da escola em atividade de cidadania e controle social.</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="cta-band" aria-label="Continue navegando">
+      <div>
+        <h2>Conhecer a história fortalece o futuro</h2>
+        <p>Depois de visitar a homenagem ao patrono, acompanhe também as notícias e materiais sobre o ensino técnico da escola.</p>
+      </div>
+      <a class="button" href="/imprensa/">Ir para a imprensa</a>
+    </section>
+  </main>
+
+  <footer>
+    Capitão Técnico - Escola Capitão Pedro Monteiro do Amaral. Página de homenagem ao patrono.
+  </footer>
+</body>
+</html>

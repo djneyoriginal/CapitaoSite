@@ -1,0 +1,130 @@
+<!--
+  Projeto: Imprensa Jovem P.M.A
+  Prof. Sidney Cambauva
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Imprensa Jovem P.M.A</title>
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body{background:#081227;padding:24px;overflow:auto}
+    .admin{max-width:1500px;margin:0 auto}
+    .admin-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .badge{padding:10px 14px;border-radius:999px;background:#17233A;border:1px solid rgba(255,255,255,.12)}
+    .admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:18px}
+    .card h2{margin:0 0 14px;font-size:18px}
+    label{display:block;font-size:12px;color:#b6c2d9;margin:10px 0 6px}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0b1931;color:#fff;box-sizing:border-box}
+    textarea{min-height:88px;resize:vertical}
+    .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .video-option{display:flex;align-items:center;gap:9px;margin-top:10px}
+    .video-option input{width:18px;height:18px;padding:0;accent-color:#1d5cff}
+    .video-option label{margin:0;color:#fff;cursor:pointer}
+    .btn{background:#e31d2b;border:none;color:#fff;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer}
+    .btn.secondary{background:#1d5cff}
+    .btn.gray{background:#25314e}
+    .list{display:grid;gap:10px}
+    .item{padding:12px;border-radius:12px;background:#0b1931;border:1px solid rgba(255,255,255,.1)}
+    .item strong{display:block}
+    .small{font-size:12px;color:#b6c2d9}
+    .back{display:inline-block;margin-bottom:16px;color:#fff;text-decoration:none}
+    .login{max-width:420px;margin:60px auto}
+    .hidden{display:none}
+    @media (max-width: 820px){
+      body{padding:12px}
+      .admin-head{align-items:flex-start;flex-direction:column}
+      .admin-grid,.row{grid-template-columns:1fr}
+      .card{padding:14px;border-radius:12px}
+      .login{margin:24px auto}
+      .actions .btn{flex:1 1 auto}
+    }
+  </style>
+</head>
+<body>
+  <div class="admin" id="adminRoot" style="display:none">
+    <div class="admin-head">
+      <a class="back" href="./">← Voltar para o painel</a>
+      <div class="badge" id="authInfo">Carregando...</div>
+    </div>
+
+    <div class="card">
+      <h2>Configurações gerais</h2>
+      <div class="admin-grid">
+        <div><label>Título</label><input id="setTitle"></div>
+        <div><label>Subtítulo</label><input id="setSubtitle"></div>
+        <div><label>Cidade</label><input id="setCity"></div>
+        <div><label>Vídeo de espera (URL)</label><input id="setVideoUrl" placeholder="https://..."></div>
+        <div><label>Imagem principal</label><input id="setHeroImage" placeholder="https://..."></div>
+        <div><label>Texto do QR</label><input id="setQrText"></div>
+        <div><label>Feeds RSS (um por linha)</label><textarea id="setRssFeeds"></textarea></div>
+        <div><label>Chave OpenWeather</label><input id="setWeatherKey" placeholder="OPENWEATHER_API_KEY"></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="saveSettings">Salvar configurações</button>
+        <button class="btn secondary" id="reloadState">Recarregar</button>
+        <button class="btn gray" id="logoutBtn">Sair</button>
+      </div>
+      <p class="small">Se não definir chave de clima, o painel mostra uma previsão demonstrativa.</p>
+    </div>
+
+    <div class="admin-grid" style="margin-top:18px">
+      <div class="card">
+        <h2>Nova notícia</h2>
+        <label>Categoria</label><input id="newsCategory" value="GERAL">
+        <label>Título</label><input id="newsTitle">
+        <label>Link da notícia original</label><input id="newsLink" placeholder="https://...">
+        <label>Resumo</label><textarea id="newsSummary"></textarea>
+        <label>Imagem (URL)</label><input id="newsImage" placeholder="https://...">
+        <label>Vídeo incorporado (MP4, WebM, OGG ou YouTube)</label><input id="newsVideo" placeholder="https://...">
+        <div class="video-option"><input id="newsPlayFullVideo" type="checkbox"><label for="newsPlayFullVideo">Confirmar: exibir vídeo até o fim</label></div>
+        <div class="row"><div><label>Horário</label><input id="newsTime" placeholder="Hoje, 09:15"></div><div><label>Prioridade</label><input id="newsPriority" type="number" value="10"></div></div>
+        <div class="actions"><button class="btn" id="addNews">Adicionar notícia</button></div>
+      </div>
+
+      <div class="card">
+        <h2>Novo evento</h2>
+        <div class="row"><div><label>Data</label><input id="eventDate" placeholder="28 JUL"></div><div><label>Cor</label><input id="eventColor" placeholder="red"></div></div>
+        <label>Título</label><input id="eventTitle">
+        <label>Resumo</label><textarea id="eventSummary"></textarea>
+        <label>Horário</label><input id="eventTime" placeholder="08h00 – Auditório">
+        <div class="actions"><button class="btn" id="addEvent">Adicionar evento</button></div>
+      </div>
+    </div>
+
+    <div class="admin-grid" style="margin-top:18px">
+      <div class="card">
+        <h2>Enviar imagem ou vídeo</h2>
+        <input type="file" id="uploadFile" />
+        <div class="actions"><button class="btn secondary" id="uploadBtn">Fazer upload</button></div>
+        <div class="small" id="uploadResult"></div>
+      </div>
+
+      <div class="card">
+        <h2>Itens atuais</h2>
+        <div id="currentItems" class="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card login" id="loginBox">
+    <h2 style="margin-top:0">Entrar no admin</h2>
+    <label>Usuário</label><input id="username" value="admin">
+    <label>Senha</label><input id="password" type="password" autocomplete="current-password">
+    <div class="actions"><button class="btn" id="loginBtn">Entrar</button></div>
+    <p class="small">Use o arquivo `.env` para definir o login administrativo.</p>
+  </div>
+
+  <script src="js/base-path.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

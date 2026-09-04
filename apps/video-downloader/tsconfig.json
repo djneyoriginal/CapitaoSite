@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": false,
+        "lib": [
+            "ES2021.String",
+            "DOM",
+        ]
+    }
+}

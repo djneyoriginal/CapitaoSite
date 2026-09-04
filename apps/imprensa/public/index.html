@@ -1,0 +1,109 @@
+<!--
+  Projeto: Imprensa Jovem P.M.A
+  Prof. Sidney Cambauva
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Imprensa Jovem P.M.A</title>
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__logo" id="brandLogo">P.M.A</div>
+        <div class="brand__text">
+          <h1 id="title">IMPRENSA JOVEM CAPITÃO</h1>
+          <p id="subtitle">Informação • Educação • Tecnologia • Cultura • Esportes</p>
+        </div>
+      </div>
+      <div class="topbar__stats">
+        <div class="pill live"><span class="dot"></span> AO VIVO</div>
+        <div class="stat"><div class="stat__label">Relógio</div><div class="stat__value" id="clock">00:00:00</div></div>
+        <div class="stat"><div class="stat__label">Data</div><div class="stat__value" id="date">—</div></div>
+        <div class="stat weather"><div class="stat__label">Clima</div><div class="stat__value" id="weatherTemp">—</div><div class="stat__sub" id="weatherDesc">—</div></div>
+        <div class="qr"><div class="qr__box">QR</div><div class="qr__text" id="qrText">ACESSE NOSSO SITE</div></div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="panel panel--left">
+        <div class="panel__header panel__header--red">ÚLTIMAS NOTÍCIAS</div>
+        <div id="newsList" class="news-list"></div>
+      </section>
+
+      <section class="panel panel--center">
+        <section class="hero" aria-label="Carrossel de noticias em destaque">
+          <a class="hero__story" id="heroLink" target="_blank" rel="noopener noreferrer">
+            <img id="heroImage" alt="Imagem principal" />
+            <video id="heroVideo" autoplay muted loop playsinline preload="metadata"></video>
+            <div id="heroEmbed" aria-label="Vídeo em destaque"></div>
+            <div class="hero__overlay">
+              <span class="hero__tag" id="heroTag">DESTAQUE</span>
+              <h2 id="heroTitle">EDUCAÇÃO TRANSFORMA O FUTURO!</h2>
+              <p id="heroSummary">Projetos inovadores, professores dedicados e alunos protagonistas constroem uma escola cada vez melhor para todos.</p>
+            </div>
+          </a>
+          <div class="hero__controls" aria-label="Controles do carrossel">
+            <button class="hero__control hero__control--previous" id="heroPrevious" type="button" aria-label="Noticia anterior" title="Noticia anterior">&larr;</button>
+            <button class="hero__control hero__control--next" id="heroNext" type="button" aria-label="Proxima noticia" title="Proxima noticia">&rarr;</button>
+          </div>
+          <button class="hero__sound" id="heroSound" type="button" aria-label="Ativar som" aria-pressed="false" title="Ativar som" hidden>&#128263;</button>
+          <button class="hero__fullscreen" id="heroFullscreen" type="button" aria-label="Exibir vídeo em tela cheia" title="Tela cheia" hidden>&#x26F6;</button>
+          <div class="hero__dots" id="heroDots" aria-hidden="true"></div>
+        </section>
+        <div class="highlight">
+          <a class="highlight__main" id="highlightLink" target="_blank" rel="noopener noreferrer">
+            <div class="panel__header panel__header--white">EM DESTAQUE</div>
+            <div class="highlight__content">
+              <img id="highlightImage" alt="Destaque" />
+              <video id="highlightVideo" muted playsinline preload="metadata" aria-label="Prévia do vídeo em destaque"></video>
+              <div>
+                <h3 id="highlightTitle">Jovens que fazem a diferença!</h3>
+                <p id="highlightSummary">Conheça histórias inspiradoras de alunos que estão transformando ideias em ações e fazendo a diferença na nossa comunidade.</p>
+              </div>
+            </div>
+          </a>
+          <div class="highlight__side">
+            <div class="sitebox">
+              <div class="sitebox__icon">▣</div>
+              <div><strong>Acesse o site da Imprensa Jovem P.M.A</strong><p>E fique por dentro de tudo que acontece!</p></div>
+              <div class="sitebox__qr"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel--right">
+        <div class="panel__header panel__header--blue">AGENDA / EVENTOS</div>
+        <div id="eventsList" class="events-list"></div>
+        <div class="panel social">
+          <div class="panel__header panel__header--blue">SIGA NOSSAS REDES</div>
+          <div id="socialList" class="social-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="ticker">
+      <div class="ticker__label">NOTÍCIAS</div>
+      <div class="ticker__track" id="tickerTrack">Carregando notícias...</div>
+    </footer>
+
+    <div class="bottombar">
+      <div class="bottombar__text">A VOZ DOS ESTUDANTES, A NOTÍCIA DE HOJE, O FUTURO DE AMANHÃ.</div>
+      <div class="bottombar__clock" id="bottomClock">00:00</div>
+    </div>
+  </div>
+  <script src="js/base-path.js"></script>
+  <script src="socket.io/socket.io.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

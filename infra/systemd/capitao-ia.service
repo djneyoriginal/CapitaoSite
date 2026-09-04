@@ -1,0 +1,33 @@
+[Unit]
+Description=Capitão IA web downloader
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=capitao
+Group=capitao
+WorkingDirectory=/opt/capitao-ia
+ExecStart=/usr/bin/node /opt/capitao-ia/server.js
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=8787
+Environment=MAX_CONCURRENT_DOWNLOADS=1
+Environment=RATE_LIMIT_WINDOW_MS=60000
+Environment=RATE_LIMIT_MAX_REQUESTS=12
+EnvironmentFile=-/etc/capitao-ia.env
+CPUQuota=150%
+MemoryHigh=384M
+MemoryMax=640M
+TasksMax=64
+LimitNOFILE=4096
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+ReadWritePaths=/opt/capitao-ia
+
+[Install]
+WantedBy=multi-user.target

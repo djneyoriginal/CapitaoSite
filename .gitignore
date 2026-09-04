@@ -1,0 +1,44 @@
+# Credenciais e configuração local
+**/.env
+**/.env.*
+!**/.env.example
+**/cookies*.txt
+**/*credentials*
+
+# Dependências e artefatos
+**/node_modules/
+**/.npm-cache/
+**/release/
+**/runtime/
+**/dist/
+**/coverage/
+**/test-results/
+**/playwright-report/
+**/*.log
+
+# Bancos e conteúdo criado em produção
+**/*.sqlite
+**/*.sqlite-shm
+**/*.sqlite-wal
+**/*.db
+**/data/*
+!**/data/.gitkeep
+!**/data/*.example.json
+**/uploads/*
+!**/uploads/.gitkeep
+
+# Chaves e certificados privados
+**/*.pem
+**/*.ppk
+**/*.key
+**/*.pfx
+**/*.p12
+
+# Arquivos temporários, backups e sistema operacional
+**/*.bak
+**/*.bak.*
+**/*~
+.DS_Store
+Thumbs.db
+desktop.ini
+

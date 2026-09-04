@@ -1,0 +1,359 @@
+/*
+  Projeto: Imprensa Jovem P.M.A
+  Prof. Sidney Cambauva
+*/
+
+/* Imprensa Jovem P.M.A | Autoria: Prof. Sidney Cambauva | Licença: MIT */
+:root {
+  --tv-bg: #07142b;
+  --tv-panel: #102649;
+  --tv-red: #e31d2b;
+  --tv-blue: #1d5cff;
+  --tv-text: #ffffff;
+  --tv-muted: #c1cde2;
+  --tv-border: rgba(255,255,255,.15);
+  --tv-gap: clamp(8px, .8vw, 14px);
+  --tv-pad: clamp(8px, .9vw, 16px);
+}
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  background: var(--tv-bg);
+  color: var(--tv-text);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+body { overflow: hidden; }
+
+button { font: inherit; }
+
+.tv-app {
+  min-height: 100dvh;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--tv-gap);
+  padding: var(--tv-pad);
+  background: linear-gradient(180deg, #102649 0%, #07142b 54%, #051022 100%);
+}
+
+.tv-header,
+.tv-ticker {
+  border: 1px solid var(--tv-border);
+  background: rgba(8,21,46,.84);
+  box-shadow: 0 14px 32px rgba(0,0,0,.28);
+}
+
+.tv-header {
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: clamp(10px, .95vw, 16px);
+  border-radius: 10px;
+}
+
+.tv-brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1vw, 16px);
+}
+
+.tv-brand__mark {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: clamp(48px, 4.5vw, 72px);
+  height: clamp(48px, 4.5vw, 72px);
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--tv-red), #ff6a00);
+  font-size: clamp(14px, 1.25vw, 20px);
+  font-weight: 900;
+}
+
+.tv-brand h1 {
+  margin: 0;
+  font-size: clamp(22px, 2.25vw, 38px);
+  line-height: 1.04;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.tv-brand p {
+  margin: 5px 0 0;
+  color: var(--tv-muted);
+  font-size: clamp(10px, .75vw, 13px);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.tv-status {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, .8vw, 14px);
+}
+
+.tv-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border-radius: 8px;
+  background: var(--tv-red);
+  font-size: clamp(11px, .85vw, 14px);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.tv-live i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255,255,255,.18);
+}
+
+.tv-status time {
+  min-width: 76px;
+  color: #fff;
+  font-size: clamp(19px, 1.6vw, 27px);
+  font-weight: 900;
+  text-align: right;
+}
+
+.tv-stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--tv-border);
+  border-radius: 10px;
+  background: #030a18;
+  box-shadow: 0 18px 42px rgba(0,0,0,.34);
+}
+
+.tv-stage__story {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tv-stage__story.is-clickable { cursor: pointer; }
+
+.tv-stage__story:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: -5px;
+}
+
+.tv-stage img,
+.tv-stage video,
+.tv-stage iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #030a18;
+  object-fit: contain;
+  object-position: center;
+  display: none;
+}
+
+.tv-stage iframe#tvEmbed { display: block; }
+
+.tv-stage__overlay {
+  position: absolute;
+  z-index: 1;
+  inset: auto 0 0;
+  padding: clamp(20px, 2.2vw, 42px);
+  padding-bottom: clamp(32px, 3vw, 54px);
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,.72) 28%, rgba(0,0,0,.92));
+}
+
+.tv-stage__tag {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 7px 11px;
+  border-radius: 6px;
+  background: var(--tv-red);
+  font-size: clamp(11px, .85vw, 14px);
+  font-weight: 900;
+}
+
+.tv-stage h2 {
+  max-width: 1100px;
+  margin: 0;
+  font-size: clamp(30px, 4vw, 68px);
+  line-height: 1.03;
+  font-weight: 900;
+}
+
+.tv-stage__story--video h2 {
+  font-size: clamp(21px, 2.8vw, 47.6px);
+}
+
+/* O conteúdo do vídeo, inclusive legendas, deve ocupar a área sem sobreposições locais. */
+.tv-stage__story--video .tv-stage__overlay { display: none; }
+.tv-stage__story--video ~ .tv-stage__dots { display: none !important; }
+
+.tv-stage p {
+  max-width: 960px;
+  margin: 12px 0 0;
+  color: #f4f7ff;
+  font-size: clamp(15px, 1.25vw, 22px);
+  line-height: 1.34;
+}
+
+.tv-stage__navigation {
+  position: absolute;
+  z-index: 2;
+  inset: 50% 16px auto;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.tv-stage__control,
+.tv-stage__sound {
+  border: 1px solid rgba(255,255,255,.48);
+  background: rgba(5,16,34,.76);
+  color: #fff;
+  cursor: pointer;
+}
+
+.tv-stage__control {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 30px;
+  line-height: 1;
+  pointer-events: auto;
+}
+
+.tv-stage__control:hover:not(:disabled),
+.tv-stage__sound:hover { background: var(--tv-blue); }
+
+.tv-stage__control:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+.tv-stage__control:focus-visible,
+.tv-stage__sound:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.tv-stage__sound {
+  position: absolute;
+  z-index: 3;
+  right: 16px;
+  bottom: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 18px;
+}
+
+.tv-stage__dots {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 18px;
+  display: flex;
+  gap: 8px;
+  transform: translateX(-50%);
+}
+
+.tv-stage__dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.45);
+}
+
+.tv-stage__dots i.active { background: #fff; }
+
+.tv-ticker {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.tv-ticker__label {
+  flex: 0 0 auto;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(15px, 1.5vw, 25px);
+  background: var(--tv-red);
+  font-size: clamp(12px, 1vw, 17px);
+  font-weight: 900;
+}
+
+.tv-ticker__track {
+  min-width: 0;
+  padding-left: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #edf3ff;
+  font-size: clamp(13px, 1.05vw, 18px);
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+  body { overflow: auto; }
+
+  .tv-app {
+    height: auto;
+    min-height: 100dvh;
+    grid-template-rows: auto minmax(430px, 1fr) auto;
+    padding: 8px;
+  }
+
+  .tv-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tv-status { width: 100%; justify-content: space-between; }
+
+  .tv-brand h1 { font-size: 22px; }
+  .tv-brand p { display: none; }
+
+  .tv-stage { min-height: 430px; }
+
+  .tv-stage__overlay { padding: 18px; padding-bottom: 46px; }
+
+  .tv-stage h2 { font-size: clamp(26px, 8vw, 38px); }
+  .tv-stage__story--video h2 { font-size: clamp(18.2px, 5.6vw, 26.6px); }
+
+  .tv-stage p {
+    font-size: 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .tv-stage__navigation { inset-inline: 10px; }
+  .tv-stage__control { width: 40px; height: 40px; }
+  .tv-stage__sound { right: 10px; bottom: 12px; }
+  .tv-stage__dots { bottom: 16px; gap: 6px; }
+  .tv-stage__dots i { width: 8px; height: 8px; }
+}

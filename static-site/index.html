@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Capitão Técnico | Escola Capitão Pedro Monteiro do Amaral</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/assets/logo-capitao-tecnico.svg">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #101828;
+      --muted: #536173;
+      --paper: #ffffff;
+      --line: #d8e2ee;
+      --blue: #1769e0;
+      --teal: #00a38a;
+      --lime: #d9f24f;
+      --coral: #ff6b5f;
+      --navy: #10213f;
+      --soft: #f4f8fb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(23, 105, 224, 0.13), transparent 34%),
+        linear-gradient(315deg, rgba(255, 107, 95, 0.12), transparent 30%),
+        var(--soft);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a:focus-visible {
+      outline: 3px solid var(--lime);
+      outline-offset: 4px;
+    }
+
+    .topbar {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 14px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(244, 248, 251, 0.88);
+      border-bottom: 1px solid rgba(16, 33, 63, 0.10);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      font-weight: 800;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      flex: 0 0 auto;
+    }
+
+    .brand-mark img {
+      width: 48px;
+      height: 48px;
+      display: block;
+    }
+
+    .brand-text {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .brand-text strong,
+    .brand-text span {
+      overflow-wrap: anywhere;
+    }
+
+    .brand-text span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    nav a {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 13px;
+      border: 1px solid rgba(16, 33, 63, 0.14);
+      border-radius: 8px;
+      color: var(--navy);
+      background: rgba(255, 255, 255, 0.72);
+      font-size: 14px;
+      font-weight: 800;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    nav a:hover {
+      transform: translateY(-2px);
+      border-color: rgba(23, 105, 224, 0.35);
+      background: #ffffff;
+    }
+
+    main {
+      padding-bottom: 48px;
+    }
+
+    .hero {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      min-height: calc(100vh - 96px);
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      align-items: center;
+      gap: 38px;
+      padding: 42px 0 78px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 18px;
+      color: var(--blue);
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .spark {
+      width: 34px;
+      height: 10px;
+      background:
+        linear-gradient(90deg, var(--coral) 0 28%, transparent 28% 36%, var(--teal) 36% 64%, transparent 64% 72%, var(--lime) 72%);
+      border-radius: 3px;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: 72px;
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 650px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: 21px;
+      line-height: 1.55;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .button {
+      min-height: 50px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 18px;
+      border-radius: 8px;
+      font-weight: 900;
+      line-height: 1.2;
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .button svg {
+      width: 19px;
+      height: 19px;
+      flex: 0 0 auto;
+    }
+
+    .primary {
+      color: #ffffff;
+      background: var(--blue);
+      box-shadow: 0 12px 26px rgba(23, 105, 224, 0.24);
+    }
+
+    .primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 32px rgba(23, 105, 224, 0.30);
+    }
+
+    .secondary {
+      color: var(--navy);
+      border: 1px solid var(--line);
+      background: var(--paper);
+    }
+
+    .secondary:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0, 163, 138, 0.42);
+      box-shadow: 0 12px 28px rgba(16, 33, 63, 0.08);
+    }
+
+    .status-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .status-strip span {
+      display: inline-flex;
+      min-height: 34px;
+      align-items: center;
+      padding: 0 12px;
+      border: 1px solid rgba(16, 33, 63, 0.10);
+      border-radius: 8px;
+      color: var(--navy);
+      background: rgba(255, 255, 255, 0.74);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .hero-visual {
+      position: relative;
+      min-height: 520px;
+      border: 1px solid rgba(16, 33, 63, 0.12);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(16, 33, 63, 0.94), rgba(23, 105, 224, 0.86)),
+        repeating-linear-gradient(90deg, transparent 0 34px, rgba(255, 255, 255, 0.10) 34px 35px);
+      box-shadow: 0 28px 70px rgba(16, 33, 63, 0.18);
+    }
+
+    .visual-band {
+      position: absolute;
+      inset: auto -34px 58px -34px;
+      height: 118px;
+      transform: rotate(-7deg);
+      background: var(--lime);
+    }
+
+    .visual-card {
+      position: absolute;
+      left: 32px;
+      right: 32px;
+      top: 38px;
+      padding: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+    }
+
+    .visual-title {
+      margin: 0 0 16px;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .code-lines {
+      display: grid;
+      gap: 10px;
+    }
+
+    .code-line {
+      height: 12px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .code-line:nth-child(2) {
+      width: 72%;
+      background: var(--lime);
+    }
+
+    .code-line:nth-child(3) {
+      width: 84%;
+      background: rgba(0, 163, 138, 0.86);
+    }
+
+    .students {
+      position: absolute;
+      left: 42px;
+      right: 42px;
+      bottom: 34px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .student-tile {
+      min-height: 132px;
+      display: grid;
+      align-content: end;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 8px;
+      color: var(--navy);
+      background: var(--paper);
+      box-shadow: 0 18px 38px rgba(16, 33, 63, 0.18);
+    }
+
+    .tile-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #ffffff;
+      background: var(--teal);
+    }
+
+    .student-tile:nth-child(2) .tile-icon {
+      background: var(--coral);
+    }
+
+    .student-tile:nth-child(3) .tile-icon {
+      background: var(--blue);
+    }
+
+    .tile-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .student-tile strong {
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .quick-actions {
+      width: min(1120px, calc(100% - 32px));
+      margin: -48px auto 0;
+      position: relative;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .quick-link {
+      min-height: 132px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--navy);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 14px 34px rgba(16, 33, 63, 0.10);
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+
+    .quick-link:hover {
+      transform: translateY(-3px);
+      border-color: rgba(23, 105, 224, 0.28);
+      box-shadow: 0 18px 42px rgba(16, 33, 63, 0.13);
+    }
+
+    .quick-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #ffffff;
+      background: var(--blue);
+    }
+
+    .quick-link:nth-child(2) .quick-icon {
+      background: var(--teal);
+    }
+
+    .quick-link:nth-child(3) .quick-icon {
+      background: var(--coral);
+    }
+
+    .quick-link:nth-child(4) .quick-icon {
+      color: var(--navy);
+      background: var(--lime);
+    }
+
+    .quick-link:nth-child(5) .quick-icon {
+      background: var(--navy);
+    }
+
+    .quick-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .quick-link strong {
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .quick-link span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .section {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 52px 0;
+    }
+
+    .section-title {
+      display: grid;
+      gap: 12px;
+      max-width: 700px;
+      margin-bottom: 24px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 34px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .section-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.55;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      min-height: 210px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.84);
+      box-shadow: 0 14px 36px rgba(16, 33, 63, 0.08);
+    }
+
+    .card strong {
+      display: block;
+      margin: 16px 0 10px;
+      color: var(--navy);
+      font-size: 19px;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .info-band {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px;
+      border-radius: 8px;
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--navy), #17406f 62%, var(--teal));
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .info-band h2 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    .info-band p {
+      margin: 0;
+      max-width: 700px;
+      color: rgba(255, 255, 255, 0.84);
+      line-height: 1.55;
+    }
+
+    .info-band .button {
+      color: var(--navy);
+      background: var(--lime);
+      white-space: nowrap;
+    }
+
+    footer {
+      width: min(1120px, calc(100% - 32px));
+      margin: 34px auto 0;
+      padding: 22px 0 34px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .topbar,
+      .hero,
+      .quick-actions,
+      .info-band {
+        width: min(100% - 24px, 720px);
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      nav {
+        justify-content: flex-start;
+      }
+
+      .hero {
+        min-height: auto;
+        grid-template-columns: 1fr;
+        padding-top: 22px;
+      }
+
+      .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 52px;
+      }
+
+      .lead {
+        font-size: 19px;
+      }
+
+      .hero-visual {
+        min-height: 440px;
+      }
+
+      .section {
+        width: min(100% - 24px, 720px);
+        padding: 42px 0;
+      }
+
+      .cards,
+      .info-band {
+        grid-template-columns: 1fr;
+      }
+
+      .info-band .button {
+        justify-self: start;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .brand {
+        align-items: flex-start;
+      }
+
+      nav a {
+        flex: 1 1 auto;
+      }
+
+      h1 {
+        font-size: 42px;
+      }
+
+      .actions .button {
+        width: 100%;
+      }
+
+      .quick-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-visual {
+        min-height: 520px;
+      }
+
+      .students {
+        grid-template-columns: 1fr;
+        left: 24px;
+        right: 24px;
+      }
+
+      .visual-card {
+        left: 24px;
+        right: 24px;
+      }
+
+      .student-tile {
+        min-height: 96px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Página inicial da Capitão Técnico">
+      <span class="brand-mark" aria-hidden="true">
+        <img src="/assets/logo-capitao-tecnico.svg" alt="">
+      </span>
+      <span class="brand-text">
+        <strong>Capitão Técnico</strong>
+        <span>Escola Capitão Pedro Monteiro do Amaral</span>
+      </span>
+    </a>
+
+    <nav aria-label="Navegação principal">
+      <a href="#ensino">Ensino técnico</a>
+      <a href="/historia/">História da escola</a>
+      <a href="/patrono/">Conheça nosso patrono</a>
+      <a href="/imprensa/">Imprensa</a>
+      <a href="/ia.html">Capitão IA</a>
+      <a href="#comunidade">Comunidade</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-label="Apresentação da Capitão Técnico">
+      <div>
+        <p class="eyebrow"><span class="spark" aria-hidden="true"></span> Educação pública, tecnologia e futuro</p>
+        <h1>Capitão Técnico</h1>
+        <p class="lead">A frente de ensino técnico da Escola Capitão Pedro Monteiro do Amaral aproxima estudantes, famílias e comunidade das oportunidades em tecnologia, projetos práticos e formação profissional.</p>
+        <div class="status-strip" aria-label="Destaques do projeto">
+          <span>Ensino técnico</span>
+          <span>Memorial escolar</span>
+          <span>Imprensa ativa</span>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="/imprensa/">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 19.5V5a2 2 0 0 1 2-2h11a3 3 0 0 1 3 3v14"></path>
+              <path d="M6 17h14"></path>
+              <path d="M8 7h6"></path>
+              <path d="M8 11h8"></path>
+            </svg>
+            Conheça o ensino técnico
+          </a>
+          <a class="button secondary" href="/imprensa/">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 19h16"></path>
+              <path d="M4 7h16"></path>
+              <path d="M7 7v12"></path>
+              <path d="M17 7v12"></path>
+              <path d="M9 11h6"></path>
+              <path d="M9 15h6"></path>
+            </svg>
+            Notícias e comunicados
+          </a>
+          <a class="button secondary" href="/patrono/">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3l3 6 6 .9-4.5 4.3 1.1 6.1L12 17.4l-5.6 2.9 1.1-6.1L3 9.9 9 9l3-6z"></path>
+            </svg>
+            Conheça nosso patrono
+          </a>
+          <a class="button secondary" href="/historia/">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 4h7a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H3z"></path>
+              <path d="M21 4h-7a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h8z"></path>
+            </svg>
+            História da escola
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="visual-band"></div>
+        <div class="visual-card">
+          <p class="visual-title">Projeto em sala</p>
+          <div class="code-lines">
+            <span class="code-line"></span>
+            <span class="code-line"></span>
+            <span class="code-line"></span>
+            <span class="code-line"></span>
+          </div>
+        </div>
+        <div class="students">
+          <div class="student-tile">
+            <span class="tile-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 8l-4 4 4 4"></path>
+                <path d="M17 8l4 4-4 4"></path>
+                <path d="M14 4l-4 16"></path>
+              </svg>
+            </span>
+            <strong>Programação</strong>
+          </div>
+          <div class="student-tile">
+            <span class="tile-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="5" width="16" height="12" rx="2"></rect>
+                <path d="M8 21h8"></path>
+                <path d="M12 17v4"></path>
+              </svg>
+            </span>
+            <strong>Laboratórios</strong>
+          </div>
+          <div class="student-tile">
+            <span class="tile-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v20"></path>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+            </span>
+            <strong>Carreira</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="quick-actions" aria-label="Acessos rápidos">
+      <a class="quick-link" href="/imprensa/">
+        <span class="quick-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5V5a2 2 0 0 1 2-2h11a3 3 0 0 1 3 3v14"></path>
+            <path d="M6 17h14"></path>
+            <path d="M8 7h7"></path>
+            <path d="M8 11h9"></path>
+          </svg>
+        </span>
+        <strong>Imprensa</strong>
+        <span>Notícias, comunicados e materiais do ensino técnico.</span>
+      </a>
+
+      <a class="quick-link" href="/ia.html">
+        <span class="quick-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v12"></path>
+            <path d="m7 10 5 5 5-5"></path>
+            <path d="M5 21h14"></path>
+          </svg>
+        </span>
+        <strong>Capitão IA</strong>
+        <span>Baixe vídeos e áudios pelo servidor da escola.</span>
+      </a>
+
+      <a class="quick-link" href="/historia/">
+        <span class="quick-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 6v6l4 2"></path>
+            <circle cx="12" cy="12" r="9"></circle>
+          </svg>
+        </span>
+        <strong>História</strong>
+        <span>Memorial, território, Parque Peruche e referências coloniais.</span>
+      </a>
+
+      <a class="quick-link" href="/patrono/">
+        <span class="quick-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l3 6 6 .9-4.5 4.3 1.1 6.1L12 17.4l-5.6 2.9 1.1-6.1L3 9.9 9 9l3-6z"></path>
+          </svg>
+        </span>
+        <strong>Patrono</strong>
+        <span>Homenagem ao Capitão Pedro Monteiro do Amaral.</span>
+      </a>
+
+      <a class="quick-link" href="#ensino">
+        <span class="quick-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 17l8 4 8-4"></path>
+            <path d="M4 12l8 4 8-4"></path>
+            <path d="M12 3L2 8l10 5 10-5-10-5z"></path>
+          </svg>
+        </span>
+        <strong>Ensino técnico</strong>
+        <span>Projetos, práticas e caminhos para o futuro profissional.</span>
+      </a>
+    </section>
+
+    <section class="section" id="ensino" aria-label="Ensino técnico">
+      <div class="section-title">
+        <h2>Uma porta de entrada para o mundo da tecnologia</h2>
+        <p>O Capitão Técnico reúne informações, projetos e comunicados sobre o ensino técnico da escola para que estudantes e responsáveis acompanhem tudo em um só lugar.</p>
+      </div>
+
+      <div class="cards">
+        <article class="card">
+          <span class="tile-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l9 5-9 5-9-5 9-5z"></path>
+              <path d="M3 12l9 5 9-5"></path>
+              <path d="M3 17l9 5 9-5"></path>
+            </svg>
+          </span>
+          <strong>Aprendizagem prática</strong>
+          <p>Conteúdos ligados a tecnologia, resolução de problemas e criação de soluções para a vida real.</p>
+        </article>
+
+        <article class="card">
+          <span class="tile-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 18l6-6-6-6"></path>
+              <path d="M8 6l-6 6 6 6"></path>
+            </svg>
+          </span>
+          <strong>Projetos dos estudantes</strong>
+          <p>Espaço para mostrar iniciativas, eventos e experiências desenvolvidas durante a formação técnica.</p>
+        </article>
+
+        <article class="card">
+          <span class="tile-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21h18"></path>
+              <path d="M7 21V9h10v12"></path>
+              <path d="M9 9V5h6v4"></path>
+              <path d="M10 13h4"></path>
+              <path d="M10 17h4"></path>
+            </svg>
+          </span>
+          <strong>Informação para todos</strong>
+          <p>Notícias e orientações para a comunidade entender melhor as oportunidades do ensino técnico.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="info-band" id="comunidade" aria-label="Canal de informações">
+      <div>
+        <h2>Quer saber mais?</h2>
+        <p>Acompanhe a página de imprensa para novidades, materiais e publicações sobre o ensino técnico da Escola Capitão Pedro Monteiro do Amaral.</p>
+      </div>
+      <a class="button" href="/imprensa/">Acessar /imprensa</a>
+    </section>
+  </main>
+
+  <footer>
+    Capitão Técnico - Escola Capitão Pedro Monteiro do Amaral. Página inicial do projeto de ensino técnico.
+  </footer>
+</body>
+</html>

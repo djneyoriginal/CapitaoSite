@@ -1,0 +1,24 @@
+[Unit]
+Description=Painel da Imprensa Jovem
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/opt/six/imprensa
+ExecStart=/usr/bin/node /opt/six/imprensa/server.js
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+EnvironmentFile=-/opt/six/imprensa/.env
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+ReadWritePaths=/opt/six/imprensa/data /opt/six/imprensa/uploads
+
+[Install]
+WantedBy=multi-user.target
+

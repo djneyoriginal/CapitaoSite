@@ -1,0 +1,26 @@
+[Unit]
+Description=Capitao yt-dlp PO Token provider
+After=network-online.target
+Wants=network-online.target
+Before=capitao-ia.service
+
+[Service]
+Type=simple
+User=capitao
+Group=capitao
+WorkingDirectory=/opt/capitao-pot-provider/server
+ExecStart=/usr/bin/node /opt/capitao-pot-provider/server/build/main.js
+Restart=on-failure
+RestartSec=5
+CPUQuota=50%
+MemoryHigh=128M
+MemoryMax=256M
+TasksMax=32
+LimitNOFILE=1024
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,61 @@
+name: Web CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install production dependencies
+        run: npm ci --omit=dev
+
+      - name: Validate server
+        run: node --check server.js
+
+      - name: Validate AWS installer
+        run: bash -n deploy/aws-install.sh deploy/install-cookies.sh
+
+      - name: Test HTTP routes
+        run: |
+          node - <<'NODE'
+          const { server, acquireDownloadSlot } = require('./server.js');
+          server.listen(0, '127.0.0.1', async () => {
+            const base = `http://127.0.0.1:${server.address().port}`;
+            const health = await fetch(`${base}/api/health`);
+            const page = await fetch(`${base}/ia`);
+            if (!health.ok || !(await health.json()).ok || !page.ok) process.exitCode = 1;
+
+            const statuses = [];
+            for (let index = 0; index < 13; index += 1) {
+              const response = await fetch(`${base}/api/info?url=invalid`, {headers: {'X-Real-IP': '198.51.100.22'}});
+              statuses.push(response.status);
+            }
+            if (statuses[11] !== 400 || statuses[12] !== 429) process.exitCode = 1;
+
+            const release = acquireDownloadSlot();
+            try {
+              acquireDownloadSlot();
+              process.exitCode = 1;
+            } catch (error) {
+              if (error.statusCode !== 429) process.exitCode = 1;
+            } finally {
+              release();
+            }
+            server.close();
+          });
+          NODE
