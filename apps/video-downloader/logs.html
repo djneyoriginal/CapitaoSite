@@ -91,6 +91,7 @@
     <section class="panel" aria-label="Eventos recentes">
       <h2>Eventos recentes</h2>
       <p id="status" class="status" role="status">Carregando relatório...</p>
+      <p id="source" class="status"></p>
       <div id="events" class="events"></div>
     </section>
   </main>
@@ -123,7 +124,8 @@
             $(`#${key}`).textContent = number.format(stats[key] || 0);
           });
           $("#megabytesConverted").textContent = number.format(stats.megabytesConverted || 0);
-          $("#status").textContent = `Última atualização: ${formatDate(stats.updatedAt)}`;
+          $("#status").textContent = `Período consolidado desde ${formatDate(stats.startedAt)} · última atualização: ${formatDate(stats.updatedAt)}`;
+          $("#source").textContent = stats.importedFromNginxAt ? `Histórico importado dos logs do Nginx em ${formatDate(stats.importedFromNginxAt)} (${stats.importedFromNginxFiles || 0} arquivos).` : "Coleta iniciada pelo contador interno da aplicação.";
           $("#events").innerHTML = (stats.recentEvents || []).map((event) => {
             const klass = eventClass[event.type] || "";
             const extra = event.megabytes ? `${number.format(event.megabytes)} MB` : event.page || event.message || "";

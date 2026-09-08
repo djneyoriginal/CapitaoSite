@@ -62,7 +62,7 @@ async function loadStats() {
 		const saved = JSON.parse(await fs.readFile(STATS_FILE, "utf8"));
 		Object.assign(stats, {
 			...saved,
-			startedAt: stats.startedAt,
+			startedAt: saved.startedAt || stats.startedAt,
 			visitors: saved && typeof saved.visitors === "object" && saved.visitors ? saved.visitors : {},
 			recentEvents: Array.isArray(saved?.recentEvents) ? saved.recentEvents.slice(-80) : [],
 		});
@@ -106,6 +106,8 @@ function publicStats() {
 		bytesConverted: stats.bytesConverted,
 		megabytesConverted: Number((stats.bytesConverted / 1024 / 1024).toFixed(2)),
 		activeDownloads,
+		importedFromNginxAt: stats.importedFromNginxAt || null,
+		importedFromNginxFiles: Array.isArray(stats.importedFromNginxFiles) ? stats.importedFromNginxFiles.length : 0,
 		recentEvents: stats.recentEvents.slice(-20).reverse(),
 	};
 }
