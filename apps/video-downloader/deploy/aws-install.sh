@@ -156,6 +156,7 @@ Environment=MAX_CONCURRENT_DOWNLOADS=1
 Environment=RATE_LIMIT_WINDOW_MS=60000
 Environment=RATE_LIMIT_MAX_REQUESTS=12
 Environment=YT_DLP_JS_RUNTIME=node
+# Opcional: defina LOGS_TOKEN em /etc/capitao-ia.env para proteger /logs.html.
 EnvironmentFile=-/etc/capitao-ia.env
 CPUQuota=150%
 MemoryHigh=384M
@@ -196,6 +197,26 @@ location = /ia {
 
 location = /ia.html {
     proxy_pass http://127.0.0.1:$PORT/ia;
+    proxy_http_version 1.1;
+    proxy_buffering off;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+}
+
+location = /logs {
+    proxy_pass http://127.0.0.1:$PORT/logs;
+    proxy_http_version 1.1;
+    proxy_buffering off;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+}
+
+location = /logs.html {
+    proxy_pass http://127.0.0.1:$PORT/logs.html;
     proxy_http_version 1.1;
     proxy_buffering off;
     proxy_set_header Host \$host;

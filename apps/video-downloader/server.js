@@ -9,11 +9,14 @@ const YTDlpWrap = require("yt-dlp-wrap-plus").default;
 
 const ROOT_DIR = __dirname;
 const PAGE_FILE = path.join(ROOT_DIR, "ia.html");
+const LOGS_PAGE_FILE = path.join(ROOT_DIR, "logs.html");
 const RUNTIME_DIR = path.join(ROOT_DIR, "runtime");
+const STATS_FILE = path.join(RUNTIME_DIR, "stats.json");
 const BINARY_NAME = process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp";
 const LOCAL_BINARY = path.join(RUNTIME_DIR, BINARY_NAME);
 const PORT = Number.parseInt(process.env.PORT || "8787", 10);
 const HOST = process.env.HOST || "127.0.0.1";
+const LOGS_TOKEN = process.env.LOGS_TOKEN?.trim() || "";
 const BODY_LIMIT = 32 * 1024;
 const INFO_TIMEOUT_MS = 120000;
 const MAX_CONCURRENT_DOWNLOADS = positiveInteger(process.env.MAX_CONCURRENT_DOWNLOADS, 1);
@@ -23,7 +26,20 @@ const RATE_LIMIT_MAX_REQUESTS = positiveInteger(process.env.RATE_LIMIT_MAX_REQUE
 let ytDlpInstance = null;
 let ytDlpSetupPromise = null;
 let activeDownloads = 0;
+let statsWritePromise = Promise.resolve();
 const rateLimitBuckets = new Map();
+const stats = {
+	startedAt: new Date().toISOString(),
+	updatedAt: new Date().toISOString(),
+	pageViews: 0,
+	apiInfoRequests: 0,
+	downloadAttempts: 0,
+	downloadsCompleted: 0,
+	downloadErrors: 0,
+	bytesConverted: 0,
+	visitors: {},
+	recentEvents: [],
+};
 
 function positiveInteger(value, fallback) {
 	const parsed = Number.parseInt(value, 10);
@@ -39,6 +55,68 @@ function json(res, status, payload, extraHeaders = {}) {
 		...extraHeaders,
 	});
 	res.end(body);
+}
+
+async function loadStats() {
+	try {
+		const saved = JSON.parse(await fs.readFile(STATS_FILE, "utf8"));
+		Object.assign(stats, {
+			...saved,
+			startedAt: stats.startedAt,
+			visitors: saved && typeof saved.visitors === "object" && saved.visitors ? saved.visitors : {},
+			recentEvents: Array.isArray(saved?.recentEvents) ? saved.recentEvents.slice(-80) : [],
+		});
+	} catch (error) {
+		if (error.code !== "ENOENT") console.warn("Não foi possível carregar estatísticas:", error.message);
+	}
+}
+
+function saveStatsSoon() {
+	stats.updatedAt = new Date().toISOString();
+	statsWritePromise = statsWritePromise.then(async () => {
+		await fs.mkdir(RUNTIME_DIR, {recursive: true});
+		await fs.writeFile(STATS_FILE, JSON.stringify(stats, null, 2));
+	}).catch((error) => console.warn("Não foi possível salvar estatísticas:", error.message));
+	return statsWritePromise;
+}
+
+function addEvent(type, details = {}) {
+	stats.recentEvents.push({time: new Date().toISOString(), type, ...details});
+	if (stats.recentEvents.length > 80) stats.recentEvents.splice(0, stats.recentEvents.length - 80);
+}
+
+function recordVisit(req, page) {
+	const address = clientAddress(req);
+	stats.pageViews += 1;
+	stats.visitors[address] = {lastSeen: new Date().toISOString(), page};
+	addEvent("visit", {page});
+	saveStatsSoon();
+}
+
+function publicStats() {
+	return {
+		startedAt: stats.startedAt,
+		updatedAt: stats.updatedAt,
+		pageViews: stats.pageViews,
+		uniqueVisitors: Object.keys(stats.visitors || {}).length,
+		apiInfoRequests: stats.apiInfoRequests,
+		downloadAttempts: stats.downloadAttempts,
+		downloadsCompleted: stats.downloadsCompleted,
+		downloadErrors: stats.downloadErrors,
+		bytesConverted: stats.bytesConverted,
+		megabytesConverted: Number((stats.bytesConverted / 1024 / 1024).toFixed(2)),
+		activeDownloads,
+		recentEvents: stats.recentEvents.slice(-20).reverse(),
+	};
+}
+
+function authorizeLogs(req, requestUrl, res) {
+	if (!LOGS_TOKEN) return true;
+	const headerToken = req.headers.authorization?.replace(/^Bearer\s+/i, "").trim();
+	const queryToken = requestUrl.searchParams.get("token")?.trim();
+	if (headerToken === LOGS_TOKEN || queryToken === LOGS_TOKEN) return true;
+	json(res, 401, {ok: false, error: "Acesso ao relatório exige token."}, {"WWW-Authenticate": "Bearer"});
+	return false;
 }
 
 function clientAddress(req) {
@@ -313,6 +391,9 @@ async function handleDownload(req, res) {
 	let stream;
 	let responseHeaders;
 	try {
+		stats.downloadAttempts += 1;
+		addEvent("download_started", {});
+		saveStatsSoon();
 		const raw = await readBody(req);
 		const body = parseRequestBody(raw, req.headers["content-type"] || "");
 		const url = validateMediaUrl(body.url);
@@ -336,10 +417,14 @@ async function handleDownload(req, res) {
 	let headersSent = false;
 	let finished = false;
 	let downloadFailed = false;
+	let bytesSent = 0;
 	stream.once("close", () => { finished = true; });
 	stream.on("error", (error) => {
 		if (downloadFailed) return;
 		downloadFailed = true;
+		stats.downloadErrors += 1;
+		addEvent("download_error", {message: friendlyError(error).slice(0, 160)});
+		saveStatsSoon();
 		console.error("Falha no download:", error.message);
 		if (!headersSent && !res.headersSent) return json(res, 502, {ok: false, error: friendlyError(error)});
 		if (!res.writableEnded) res.destroy();
@@ -349,6 +434,7 @@ async function handleDownload(req, res) {
 	});
 	stream.on("data", (chunk) => {
 		if (res.destroyed) return stream.destroy();
+		bytesSent += chunk.length;
 		if (!headersSent) {
 			res.writeHead(200, responseHeaders);
 			headersSent = true;
@@ -358,6 +444,10 @@ async function handleDownload(req, res) {
 	res.on("drain", () => stream.resume());
 	stream.once("end", () => {
 		if (!headersSent) return json(res, 502, {ok: false, error: "O servidor não recebeu dados para este download."});
+		stats.downloadsCompleted += 1;
+		stats.bytesConverted += bytesSent;
+		addEvent("download_completed", {megabytes: Number((bytesSent / 1024 / 1024).toFixed(2))});
+		saveStatsSoon();
 		if (!res.writableEnded) res.end();
 	});
 }
@@ -371,8 +461,15 @@ async function handleRequest(req, res) {
 	const requestUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 	try {
 		if (req.method === "GET" && requestUrl.pathname === "/api/health") return json(res, 200, {ok: true, service: "capitao-ia-downloader", page: "/ia"});
+		if (req.method === "GET" && requestUrl.pathname === "/api/stats") {
+			if (!authorizeLogs(req, requestUrl, res)) return;
+			return json(res, 200, {ok: true, stats: publicStats()});
+		}
 		if (req.method === "GET" && requestUrl.pathname === "/api/info") {
 			if (!allowMediaRequest(req, res)) return;
+			stats.apiInfoRequests += 1;
+			addEvent("analysis", {});
+			saveStatsSoon();
 			const mediaUrl = validateMediaUrl(requestUrl.searchParams.get("url") || "");
 			return json(res, 200, {ok: true, media: await getInfo(mediaUrl)});
 		}
@@ -385,7 +482,15 @@ async function handleRequest(req, res) {
 			return res.end();
 		}
 		if (req.method === "GET" && ["/ia", "/ia.html"].includes(requestUrl.pathname)) {
+			recordVisit(req, "/ia");
 			const content = await fs.readFile(PAGE_FILE);
+			res.writeHead(200, pageHeaders("text/html; charset=utf-8"));
+			return res.end(content);
+		}
+		if (req.method === "GET" && ["/logs", "/logs.html"].includes(requestUrl.pathname)) {
+			if (!authorizeLogs(req, requestUrl, res)) return;
+			recordVisit(req, "/logs");
+			const content = await fs.readFile(LOGS_PAGE_FILE);
 			res.writeHead(200, pageHeaders("text/html; charset=utf-8"));
 			return res.end(content);
 		}
@@ -401,10 +506,14 @@ async function handleRequest(req, res) {
 const server = http.createServer(handleRequest);
 
 if (require.main === module) {
-	server.listen(PORT, HOST, () => {
+	loadStats().then(() => server.listen(PORT, HOST, () => {
 		console.log(`Capitão IA disponível em http://${HOST}:${PORT}/ia`);
+		console.log(`Relatório disponível em http://${HOST}:${PORT}/logs.html`);
 		console.log("Para publicar no domínio, use um proxy reverso HTTPS (Nginx, Caddy ou painel da hospedagem).");
+	})).catch((error) => {
+		console.error("Falha ao iniciar estatísticas:", error);
+		process.exit(1);
 	});
 }
 
-module.exports = {server, validateMediaUrl, safeFilename, downloadArguments, authenticationArguments, allowMediaRequest, acquireDownloadSlot};
+module.exports = {server, validateMediaUrl, safeFilename, downloadArguments, authenticationArguments, allowMediaRequest, acquireDownloadSlot, publicStats, loadStats};
