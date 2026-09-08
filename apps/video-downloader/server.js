@@ -3,6 +3,7 @@
 const http = require("node:http");
 const {promises: fs, existsSync} = require("node:fs");
 const {spawn} = require("node:child_process");
+const {pipeline} = require("node:stream/promises");
 const path = require("node:path");
 const {URL, URLSearchParams} = require("node:url");
 const YTDlpWrap = require("yt-dlp-wrap-plus").default;
@@ -12,11 +13,13 @@ const PAGE_FILE = path.join(ROOT_DIR, "ia.html");
 const LOGS_PAGE_FILE = path.join(ROOT_DIR, "logs.html");
 const RUNTIME_DIR = path.join(ROOT_DIR, "runtime");
 const STATS_FILE = path.join(RUNTIME_DIR, "stats.json");
+const SPOTIFY_DOWNLOAD_DIR = path.join(RUNTIME_DIR, "spotify-downloads");
 const BINARY_NAME = process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp";
 const LOCAL_BINARY = path.join(RUNTIME_DIR, BINARY_NAME);
 const PORT = Number.parseInt(process.env.PORT || "8787", 10);
 const HOST = process.env.HOST || "127.0.0.1";
 const LOGS_TOKEN = process.env.LOGS_TOKEN?.trim() || "";
+const SPOTDL_PATH = process.env.SPOTDL_PATH?.trim() || "spotdl";
 const BODY_LIMIT = 32 * 1024;
 const INFO_TIMEOUT_MS = 120000;
 const MAX_CONCURRENT_DOWNLOADS = positiveInteger(process.env.MAX_CONCURRENT_DOWNLOADS, 1);
@@ -240,6 +243,15 @@ function validateMediaUrl(value) {
 	return parsed.toString();
 }
 
+function isSpotifyUrl(value) {
+	try {
+		const parsed = new URL(value);
+		return /(^|\.)spotify\.com$/i.test(parsed.hostname) || /^spotify:/i.test(value);
+	} catch {
+		return /^spotify:/i.test(String(value || ""));
+	}
+}
+
 function safeFilename(value, extension) {
 	const normalized = String(value || "capitao-download")
 		.normalize("NFKD")
@@ -250,6 +262,97 @@ function safeFilename(value, extension) {
 		.replace(/[. ]+$/g, "")
 		.slice(0, 120);
 	return `${normalized || "capitao-download"}.${extension}`;
+}
+
+function runCommand(command, args, options = {}) {
+	return new Promise((resolve, reject) => {
+		const child = spawn(command, args, {windowsHide: true, ...options});
+		let stdout = "";
+		let stderr = "";
+		child.stdout?.on("data", (chunk) => { stdout += chunk; });
+		child.stderr?.on("data", (chunk) => { stderr += chunk; });
+		child.once("error", reject);
+		child.once("close", (code) => {
+			if (code === 0) return resolve({stdout, stderr});
+			const error = new Error(stderr || stdout || `${command} saiu com código ${code}`);
+			error.statusCode = 502;
+			reject(error);
+		});
+	});
+}
+
+async function directorySize(dir) {
+	let total = 0;
+	const entries = await fs.readdir(dir, {withFileTypes: true});
+	for (const entry of entries) {
+		const fullPath = path.join(dir, entry.name);
+		if (entry.isDirectory()) total += await directorySize(fullPath);
+		if (entry.isFile()) total += (await fs.stat(fullPath)).size;
+	}
+	return total;
+}
+
+async function handleSpotifyDownload(req, res, body) {
+	const url = validateMediaUrl(body.url);
+	const filename = safeFilename(body.title || "capitao-spotify", "zip");
+	await fs.mkdir(SPOTIFY_DOWNLOAD_DIR, {recursive: true});
+	const jobDir = await fs.mkdtemp(path.join(SPOTIFY_DOWNLOAD_DIR, "job-"));
+	const zipPath = path.join(SPOTIFY_DOWNLOAD_DIR, `${path.basename(jobDir)}.zip`);
+	const downloadEvent = rememberDownload(req, {status: "started", url, title: String(body.title || "Spotify"), type: "spotify", format: "zip", filename, megabytes: 0});
+	addEvent("download_started", {ip: downloadEvent.ip, url, filename});
+	saveStatsSoon();
+
+	try {
+		const spotdlArgs = [
+			"download",
+			url,
+			"--output",
+			path.join(jobDir, "{artists} - {title}.{output-ext}"),
+			"--format",
+			"mp3",
+			"--bitrate",
+			"192k",
+		];
+		const cookiesPath = process.env.YT_DLP_COOKIES_PATH?.trim();
+		const proxy = process.env.YT_DLP_PROXY?.trim();
+		if (cookiesPath && existsSync(cookiesPath)) spotdlArgs.push("--cookie-file", cookiesPath);
+		if (proxy) spotdlArgs.push("--proxy", proxy);
+		await runCommand(SPOTDL_PATH, spotdlArgs, {cwd: jobDir});
+
+		await runCommand("zip", ["-qr", zipPath, "."], {cwd: jobDir});
+		const bytesSent = (await fs.stat(zipPath)).size || await directorySize(jobDir);
+
+		res.writeHead(200, {
+			"Content-Type": "application/zip",
+			"Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+			"Cache-Control": "no-store",
+			"X-Content-Type-Options": "nosniff",
+		});
+		await pipeline(createReadStreamCompat(zipPath), res);
+
+		stats.downloadsCompleted += 1;
+		stats.bytesConverted += bytesSent;
+		downloadEvent.status = "completed";
+		downloadEvent.bytes = bytesSent;
+		downloadEvent.megabytes = Number((bytesSent / 1024 / 1024).toFixed(2));
+		downloadEvent.completedAt = new Date().toISOString();
+		addEvent("download_completed", {ip: downloadEvent.ip, url, megabytes: downloadEvent.megabytes});
+		saveStatsSoon();
+	} catch (error) {
+		stats.downloadErrors += 1;
+		downloadEvent.status = "error";
+		downloadEvent.error = friendlyError(error).slice(0, 160);
+		addEvent("download_error", {ip: downloadEvent.ip, url, message: downloadEvent.error});
+		saveStatsSoon();
+		throw error;
+	} finally {
+		fs.rm(jobDir, {recursive: true, force: true}).catch(() => {});
+		fs.rm(zipPath, {force: true}).catch(() => {});
+	}
+}
+
+function createReadStreamCompat(filePath) {
+	return require("node:fs").createReadStream(filePath);
 }
 
 function extensionFor(type, format) {
@@ -351,6 +454,25 @@ function publicInfo(metadata, url) {
 	};
 }
 
+function spotifyInfo(url) {
+	let type = "link";
+	try {
+		const parts = new URL(url).pathname.split("/").filter(Boolean);
+		type = parts[0] || type;
+	} catch {
+		// Keep the generic label.
+	}
+	return {
+		url,
+		title: `Spotify ${type}`,
+		channel: "spotDL buscará o áudio correspondente no YouTube",
+		thumbnail: "",
+		duration: null,
+		viewCount: null,
+		extractor: "spotDL",
+	};
+}
+
 async function getInfo(url) {
 	const ytdlp = await ensureYtDlp();
 	const controller = new AbortController();
@@ -390,6 +512,8 @@ function downloadArguments({type, format, quality, url}) {
 
 function friendlyError(error) {
 	const message = String(error?.message || error || "Erro interno.");
+	if (/spotdl|No such file|ENOENT/i.test(message)) return "O servidor precisa do spotDL instalado para links do Spotify.";
+	if (/No results found|Could not find|not found/i.test(message)) return "O spotDL não encontrou áudio correspondente para este link do Spotify.";
 	if (/ffmpeg/i.test(message)) return "O servidor precisa do ffmpeg instalado para converter ou juntar áudio e vídeo.";
 	if (/ENOENT|spawn .*yt-dlp|cannot find module|not found/i.test(message)) return "Não foi possível iniciar o yt-dlp no servidor. Confira YT_DLP_PATH ou a conexão para o download automático.";
 	if (/HTTP Error 403|403:\s*Forbidden/i.test(message)) return "O site recusou a transferência pelo IP do servidor (HTTP 403). Para o YouTube em AWS, configure um proxy autorizado ou use outro IP de saída.";
@@ -434,6 +558,7 @@ async function handleDownload(req, res) {
 		const raw = await readBody(req);
 		const body = parseRequestBody(raw, req.headers["content-type"] || "");
 		const url = validateMediaUrl(body.url);
+		if (isSpotifyUrl(url)) return await handleSpotifyDownload(req, res, body);
 		const type = body.type === "audio" ? "audio" : "video";
 		const format = extensionFor(type, String(body.format || "mp4").toLowerCase());
 		const quality = qualityFor(body.quality);
@@ -519,6 +644,7 @@ async function handleRequest(req, res) {
 			if (!allowMediaRequest(req, res)) return;
 			const mediaUrl = validateMediaUrl(requestUrl.searchParams.get("url") || "");
 			rememberAnalysis(req, mediaUrl);
+			if (isSpotifyUrl(mediaUrl)) return json(res, 200, {ok: true, media: spotifyInfo(mediaUrl)});
 			return json(res, 200, {ok: true, media: await getInfo(mediaUrl)});
 		}
 		if (req.method === "POST" && requestUrl.pathname === "/api/download") {

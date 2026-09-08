@@ -39,10 +39,10 @@ install_packages() {
 	if command -v apt-get >/dev/null 2>&1; then
 		export DEBIAN_FRONTEND=noninteractive
 		apt-get update
-		apt-get install -y ca-certificates curl nginx unzip tar xz-utils nodejs npm
+		apt-get install -y ca-certificates curl nginx unzip tar xz-utils nodejs npm python3 python3-venv python3-pip zip
 		PKG_MANAGER="apt"
 	elif command -v dnf >/dev/null 2>&1; then
-		local dnf_packages=(ca-certificates nginx unzip tar xz)
+		local dnf_packages=(ca-certificates nginx unzip tar xz python3 python3-pip zip)
 		# Amazon Linux 2023 ships curl-minimal, which conflicts with the full curl
 		# package even though it already provides the command needed here.
 		command -v curl >/dev/null 2>&1 || dnf_packages+=(curl)
