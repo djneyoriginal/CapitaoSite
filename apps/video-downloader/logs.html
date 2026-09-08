@@ -46,6 +46,12 @@
     .wide { grid-column: span 2; }
     .panel { margin: 14px 0 44px; padding: 22px; }
     .panel h2 { margin: 0 0 14px; font-size: 1.05rem; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; color: var(--muted); font-size: .86rem; }
+    th, td { padding: 11px 10px; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--text); font-size: .75rem; letter-spacing: .07em; text-transform: uppercase; }
+    td a { color: var(--accent); word-break: break-all; text-decoration: none; }
+    td a:hover { text-decoration: underline; }
     .events { display: grid; gap: 9px; }
     .event { display: grid; grid-template-columns: 168px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: .88rem; }
     .event:first-child { border-top: 0; }
@@ -94,6 +100,36 @@
       <p id="source" class="status"></p>
       <div id="events" class="events"></div>
     </section>
+
+    <section class="panel" aria-label="IPs que acessaram">
+      <h2>IPs que acessaram</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>IP</th><th>Último acesso</th><th>Página</th></tr></thead>
+          <tbody id="visitors"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Links baixados">
+      <h2>Links baixados</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>IP</th><th>Arquivo/URL</th><th>Status</th><th>MB</th></tr></thead>
+          <tbody id="downloads"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Links analisados">
+      <h2>Links analisados</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>IP</th><th>URL</th></tr></thead>
+          <tbody id="analyses"></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <footer class="shell footer">© 2026 Capitão IA · www.capitao.tec.br</footer>
@@ -111,6 +147,8 @@
       };
       const eventClass = {download_error: "error", download_started: "warn"};
       const formatDate = (value) => value ? new Intl.DateTimeFormat("pt-BR", {dateStyle: "short", timeStyle: "medium"}).format(new Date(value)) : "";
+      const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"}[char]));
+      const urlCell = (url, label = url) => url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(label || url)}</a>` : "";
 
       async function loadStats() {
         $("#status").textContent = "Atualizando relatório...";
@@ -128,9 +166,15 @@
           $("#source").textContent = stats.importedFromNginxAt ? `Histórico importado dos logs do Nginx em ${formatDate(stats.importedFromNginxAt)} (${stats.importedFromNginxFiles || 0} arquivos).` : "Coleta iniciada pelo contador interno da aplicação.";
           $("#events").innerHTML = (stats.recentEvents || []).map((event) => {
             const klass = eventClass[event.type] || "";
-            const extra = event.megabytes ? `${number.format(event.megabytes)} MB` : event.page || event.message || "";
+            const extra = event.megabytes ? `${number.format(event.megabytes)} MB` : event.ip || event.page || event.message || "";
             return `<div class="event"><time>${formatDate(event.time)}</time><strong>${eventLabel[event.type] || event.type}</strong><span class="pill ${klass}">${extra || "ok"}</span></div>`;
           }).join("") || "<p class=\"status\">Ainda não há eventos registrados.</p>";
+          $("#visitors").innerHTML = (stats.visitors || []).map((visitor) => `<tr><td>${escapeHtml(visitor.ip)}</td><td>${formatDate(visitor.lastSeen)}</td><td>${escapeHtml(visitor.page || "")}</td></tr>`).join("") || "<tr><td colspan=\"3\">Ainda não há IPs registrados.</td></tr>";
+          $("#downloads").innerHTML = (stats.downloads || []).map((download) => {
+            const label = download.filename || download.title || download.url || "";
+            return `<tr><td>${formatDate(download.completedAt || download.time)}</td><td>${escapeHtml(download.ip)}</td><td>${urlCell(download.url, label)}</td><td>${escapeHtml(download.status || "")}</td><td>${number.format(download.megabytes || 0)}</td></tr>`;
+          }).join("") || "<tr><td colspan=\"5\">Ainda não há links de download registrados.</td></tr>";
+          $("#analyses").innerHTML = (stats.analyses || []).map((analysis) => `<tr><td>${formatDate(analysis.time)}</td><td>${escapeHtml(analysis.ip)}</td><td>${urlCell(analysis.url)}</td></tr>`).join("") || "<tr><td colspan=\"3\">Ainda não há links analisados registrados.</td></tr>";
         } catch (error) {
           $("#status").textContent = error.message || "Não foi possível carregar o relatório.";
           $("#status").className = "status error";

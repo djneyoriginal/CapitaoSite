@@ -38,6 +38,9 @@ const stats = {
 	downloadErrors: 0,
 	bytesConverted: 0,
 	visitors: {},
+	visitKeys: {},
+	analyses: [],
+	downloads: [],
 	recentEvents: [],
 };
 
@@ -64,6 +67,9 @@ async function loadStats() {
 			...saved,
 			startedAt: saved.startedAt || stats.startedAt,
 			visitors: saved && typeof saved.visitors === "object" && saved.visitors ? saved.visitors : {},
+			visitKeys: saved && typeof saved.visitKeys === "object" && saved.visitKeys ? saved.visitKeys : {},
+			analyses: Array.isArray(saved?.analyses) ? saved.analyses.slice(-200) : [],
+			downloads: Array.isArray(saved?.downloads) ? saved.downloads.slice(-200) : [],
 			recentEvents: Array.isArray(saved?.recentEvents) ? saved.recentEvents.slice(-80) : [],
 		});
 	} catch (error) {
@@ -87,10 +93,34 @@ function addEvent(type, details = {}) {
 
 function recordVisit(req, page) {
 	const address = clientAddress(req);
-	stats.pageViews += 1;
-	stats.visitors[address] = {lastSeen: new Date().toISOString(), page};
-	addEvent("visit", {page});
+	const now = new Date();
+	const day = now.toISOString().slice(0, 10);
+	const visitKey = `${day}:${address}:${page}`;
+	if (!stats.visitKeys[visitKey]) {
+		stats.visitKeys[visitKey] = now.toISOString();
+		stats.pageViews += 1;
+		addEvent("visit", {ip: address, page});
+	}
+	stats.visitors[address] = {lastSeen: now.toISOString(), page};
 	saveStatsSoon();
+}
+
+function rememberAnalysis(req, url) {
+	const address = clientAddress(req);
+	const event = {time: new Date().toISOString(), ip: address, url};
+	stats.apiInfoRequests += 1;
+	stats.analyses.push(event);
+	if (stats.analyses.length > 200) stats.analyses.splice(0, stats.analyses.length - 200);
+	addEvent("analysis", {ip: address, url});
+	saveStatsSoon();
+}
+
+function rememberDownload(req, details) {
+	const address = clientAddress(req);
+	const event = {time: new Date().toISOString(), ip: address, ...details};
+	stats.downloads.push(event);
+	if (stats.downloads.length > 200) stats.downloads.splice(0, stats.downloads.length - 200);
+	return event;
 }
 
 function publicStats() {
@@ -108,6 +138,12 @@ function publicStats() {
 		activeDownloads,
 		importedFromNginxAt: stats.importedFromNginxAt || null,
 		importedFromNginxFiles: Array.isArray(stats.importedFromNginxFiles) ? stats.importedFromNginxFiles.length : 0,
+		visitors: Object.entries(stats.visitors || {})
+			.map(([ip, entry]) => ({ip, ...entry}))
+			.sort((a, b) => String(b.lastSeen || "").localeCompare(String(a.lastSeen || "")))
+			.slice(0, 80),
+		analyses: stats.analyses.slice(-80).reverse(),
+		downloads: stats.downloads.slice(-80).reverse(),
 		recentEvents: stats.recentEvents.slice(-20).reverse(),
 	};
 }
@@ -128,7 +164,7 @@ function clientAddress(req) {
 	const forwarded = req.headers["x-forwarded-for"];
 	const forwardedValue = Array.isArray(forwarded) ? forwarded[0] : forwarded;
 	if (typeof forwardedValue === "string" && forwardedValue.trim()) {
-		return forwardedValue.split(",").at(-1).trim().slice(0, 64);
+		return forwardedValue.split(",")[0].trim().slice(0, 64);
 	}
 
 	return String(req.socket.remoteAddress || "unknown").slice(0, 64);
@@ -392,10 +428,9 @@ async function handleDownload(req, res) {
 
 	let stream;
 	let responseHeaders;
+	let downloadEvent;
 	try {
 		stats.downloadAttempts += 1;
-		addEvent("download_started", {});
-		saveStatsSoon();
 		const raw = await readBody(req);
 		const body = parseRequestBody(raw, req.headers["content-type"] || "");
 		const url = validateMediaUrl(body.url);
@@ -403,6 +438,9 @@ async function handleDownload(req, res) {
 		const format = extensionFor(type, String(body.format || "mp4").toLowerCase());
 		const quality = qualityFor(body.quality);
 		const filename = safeFilename(body.title, format);
+		downloadEvent = rememberDownload(req, {status: "started", url, title: String(body.title || ""), type, format, quality, filename, megabytes: 0});
+		addEvent("download_started", {ip: downloadEvent.ip, url, filename});
+		saveStatsSoon();
 		const ytdlp = await ensureYtDlp();
 		stream = ytdlp.execStream(downloadArguments({type, format, quality, url}));
 		responseHeaders = {
@@ -425,7 +463,11 @@ async function handleDownload(req, res) {
 		if (downloadFailed) return;
 		downloadFailed = true;
 		stats.downloadErrors += 1;
-		addEvent("download_error", {message: friendlyError(error).slice(0, 160)});
+		if (downloadEvent) {
+			downloadEvent.status = "error";
+			downloadEvent.error = friendlyError(error).slice(0, 160);
+		}
+		addEvent("download_error", {ip: downloadEvent?.ip, url: downloadEvent?.url, message: friendlyError(error).slice(0, 160)});
 		saveStatsSoon();
 		console.error("Falha no download:", error.message);
 		if (!headersSent && !res.headersSent) return json(res, 502, {ok: false, error: friendlyError(error)});
@@ -448,7 +490,13 @@ async function handleDownload(req, res) {
 		if (!headersSent) return json(res, 502, {ok: false, error: "O servidor não recebeu dados para este download."});
 		stats.downloadsCompleted += 1;
 		stats.bytesConverted += bytesSent;
-		addEvent("download_completed", {megabytes: Number((bytesSent / 1024 / 1024).toFixed(2))});
+		if (downloadEvent) {
+			downloadEvent.status = "completed";
+			downloadEvent.bytes = bytesSent;
+			downloadEvent.megabytes = Number((bytesSent / 1024 / 1024).toFixed(2));
+			downloadEvent.completedAt = new Date().toISOString();
+		}
+		addEvent("download_completed", {ip: downloadEvent?.ip, url: downloadEvent?.url, megabytes: Number((bytesSent / 1024 / 1024).toFixed(2))});
 		saveStatsSoon();
 		if (!res.writableEnded) res.end();
 	});
@@ -469,10 +517,8 @@ async function handleRequest(req, res) {
 		}
 		if (req.method === "GET" && requestUrl.pathname === "/api/info") {
 			if (!allowMediaRequest(req, res)) return;
-			stats.apiInfoRequests += 1;
-			addEvent("analysis", {});
-			saveStatsSoon();
 			const mediaUrl = validateMediaUrl(requestUrl.searchParams.get("url") || "");
+			rememberAnalysis(req, mediaUrl);
 			return json(res, 200, {ok: true, media: await getInfo(mediaUrl)});
 		}
 		if (req.method === "POST" && requestUrl.pathname === "/api/download") {
@@ -491,7 +537,6 @@ async function handleRequest(req, res) {
 		}
 		if (req.method === "GET" && ["/logs", "/logs.html"].includes(requestUrl.pathname)) {
 			if (!authorizeLogs(req, requestUrl, res)) return;
-			recordVisit(req, "/logs");
 			const content = await fs.readFile(LOGS_PAGE_FILE);
 			res.writeHead(200, pageHeaders("text/html; charset=utf-8"));
 			return res.end(content);

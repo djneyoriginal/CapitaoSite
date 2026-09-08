@@ -19,8 +19,12 @@ const totals = {
 	downloadErrors: 0,
 	bytesConverted: 0,
 	visitors: {},
+	visitKeys: {},
+	analyses: [],
+	downloads: [],
 	recentEvents: [],
 };
+const latestAnalysisByIp = new Map();
 
 function nginxDate(value) {
 	const match = value.match(/^(\d{2})\/([A-Za-z]{3})\/(\d{4}):(\d{2}):(\d{2}):(\d{2}) ([+-]\d{4})$/);
@@ -36,6 +40,14 @@ function publicPath(rawUrl) {
 		return new URL(rawUrl, "http://localhost").pathname;
 	} catch {
 		return rawUrl.split("?")[0];
+	}
+}
+
+function queryParam(rawUrl, name) {
+	try {
+		return new URL(rawUrl, "http://localhost").searchParams.get(name) || "";
+	} catch {
+		return "";
 	}
 }
 
@@ -60,27 +72,50 @@ async function processFile(file) {
 		const status = Number(rawStatus);
 		const bytes = Number(rawBytes) || 0;
 
-		if (method === "GET" && ["/ia", "/ia.html", "/logs", "/logs.html"].includes(route) && status < 500) {
-			totals.pageViews += 1;
-			totals.visitors[ip] = {lastSeen: time.toISOString(), page: route.startsWith("/logs") ? "/logs" : "/ia"};
-			addEvent(time, "visit", {page: route.startsWith("/logs") ? "/logs" : "/ia"});
+		if (method === "GET" && ["/ia", "/ia.html"].includes(route) && status < 500) {
+			const day = time.toISOString().slice(0, 10);
+			const visitKey = `${day}:${ip}:/ia`;
+			if (!totals.visitKeys[visitKey]) {
+				totals.visitKeys[visitKey] = time.toISOString();
+				totals.pageViews += 1;
+				addEvent(time, "visit", {ip, page: "/ia"});
+			}
+			totals.visitors[ip] = {lastSeen: time.toISOString(), page: "/ia"};
 		}
 
 		if (method === "GET" && route === "/api/info") {
+			const url = queryParam(rawUrl, "url");
+			const event = {time: time.toISOString(), ip, url};
 			totals.apiInfoRequests += 1;
-			addEvent(time, "analysis", {});
+			totals.analyses.push(event);
+			if (totals.analyses.length > 200) totals.analyses.shift();
+			latestAnalysisByIp.set(ip, event);
+			addEvent(time, "analysis", {ip, url});
 		}
 
 		if (method === "POST" && route === "/api/download") {
+			const lastAnalysis = latestAnalysisByIp.get(ip);
+			const download = {
+				time: time.toISOString(),
+				ip,
+				url: lastAnalysis?.url || "",
+				status: status >= 200 && status < 300 ? "completed" : "error",
+				bytes: status >= 200 && status < 300 ? bytes : 0,
+				megabytes: status >= 200 && status < 300 ? Number((bytes / 1024 / 1024).toFixed(2)) : 0,
+			};
 			totals.downloadAttempts += 1;
 			if (status >= 200 && status < 300) {
 				totals.downloadsCompleted += 1;
 				totals.bytesConverted += bytes;
-				addEvent(time, "download_completed", {megabytes: Number((bytes / 1024 / 1024).toFixed(2))});
+				download.completedAt = time.toISOString();
+				addEvent(time, "download_completed", {ip, url: download.url, megabytes: download.megabytes});
 			} else {
 				totals.downloadErrors += 1;
-				addEvent(time, "download_error", {message: `HTTP ${status}`});
+				download.error = `HTTP ${status}`;
+				addEvent(time, "download_error", {ip, url: download.url, message: download.error});
 			}
+			totals.downloads.push(download);
+			if (totals.downloads.length > 200) totals.downloads.shift();
 		}
 	}
 }
@@ -100,14 +135,17 @@ async function main() {
 		...current,
 		startedAt: since.toISOString(),
 		updatedAt: new Date().toISOString(),
-		pageViews: Math.max(current.pageViews || 0, totals.pageViews),
-		apiInfoRequests: Math.max(current.apiInfoRequests || 0, totals.apiInfoRequests),
-		downloadAttempts: Math.max(current.downloadAttempts || 0, totals.downloadAttempts),
-		downloadsCompleted: Math.max(current.downloadsCompleted || 0, totals.downloadsCompleted),
-		downloadErrors: Math.max(current.downloadErrors || 0, totals.downloadErrors),
-		bytesConverted: Math.max(current.bytesConverted || 0, totals.bytesConverted),
-		visitors: {...totals.visitors, ...(current.visitors || {})},
-		recentEvents: [...totals.recentEvents, ...(current.recentEvents || [])].slice(-80),
+		pageViews: totals.pageViews,
+		apiInfoRequests: totals.apiInfoRequests,
+		downloadAttempts: totals.downloadAttempts,
+		downloadsCompleted: totals.downloadsCompleted,
+		downloadErrors: totals.downloadErrors,
+		bytesConverted: totals.bytesConverted,
+		visitors: totals.visitors,
+		visitKeys: totals.visitKeys,
+		analyses: totals.analyses,
+		downloads: totals.downloads,
+		recentEvents: totals.recentEvents,
 		importedFromNginxAt: new Date().toISOString(),
 		importedFromNginxFiles: files,
 	};
