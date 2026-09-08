@@ -19,9 +19,9 @@ install_packages() {
 	if command -v apt-get >/dev/null 2>&1; then
 		export DEBIAN_FRONTEND=noninteractive
 		apt-get update
-		apt-get install -y python3 python3-venv python3-pip ffmpeg zip
+		apt-get install -y python3.11 python3.11-venv python3-pip ffmpeg zip || apt-get install -y python3 python3-venv python3-pip ffmpeg zip
 	elif command -v dnf >/dev/null 2>&1; then
-		dnf install -y python3 python3-pip zip
+		dnf install -y python3.11 python3.11-pip zip || dnf install -y python3 python3-pip zip
 		if ! command -v ffmpeg >/dev/null 2>&1; then
 			dnf install -y ffmpeg || true
 		fi
@@ -32,9 +32,21 @@ install_packages() {
 
 install_packages
 
+PYTHON_BIN="$(command -v python3.11 || command -v python3)"
+PYTHON_VERSION="$("$PYTHON_BIN" - <<'PY'
+import sys
+print(f"{sys.version_info.major}.{sys.version_info.minor}")
+PY
+)"
+case "$PYTHON_VERSION" in
+	3.10|3.11|3.12|3.13|3.14) ;;
+	*) fail "spotDL exige Python 3.10 ou superior. Detectado: $PYTHON_VERSION" ;;
+esac
+
 log "Criando ambiente Python em $VENV_DIR..."
 install -d -o "$SERVICE_USER" -g "$SERVICE_USER" -m 0755 "$APP_DIR"
-python3 -m venv "$VENV_DIR"
+rm -rf -- "$VENV_DIR"
+"$PYTHON_BIN" -m venv "$VENV_DIR"
 "$VENV_DIR/bin/python" -m pip install --upgrade pip wheel
 "$VENV_DIR/bin/python" -m pip install --upgrade spotdl
 

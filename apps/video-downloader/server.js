@@ -292,6 +292,17 @@ async function directorySize(dir) {
 	return total;
 }
 
+async function listFiles(dir) {
+	const files = [];
+	const entries = await fs.readdir(dir, {withFileTypes: true});
+	for (const entry of entries) {
+		const fullPath = path.join(dir, entry.name);
+		if (entry.isDirectory()) files.push(...await listFiles(fullPath));
+		if (entry.isFile()) files.push(fullPath);
+	}
+	return files;
+}
+
 async function handleSpotifyDownload(req, res, body) {
 	const url = validateMediaUrl(body.url);
 	const filename = safeFilename(body.title || "capitao-spotify", "zip");
@@ -317,7 +328,13 @@ async function handleSpotifyDownload(req, res, body) {
 		const proxy = process.env.YT_DLP_PROXY?.trim();
 		if (cookiesPath && existsSync(cookiesPath)) spotdlArgs.push("--cookie-file", cookiesPath);
 		if (proxy) spotdlArgs.push("--proxy", proxy);
-		await runCommand(SPOTDL_PATH, spotdlArgs, {cwd: jobDir});
+		const result = await runCommand(SPOTDL_PATH, spotdlArgs, {cwd: jobDir});
+		const downloadedFiles = await listFiles(jobDir);
+		if (!downloadedFiles.length) {
+			const error = new Error(result.stderr || result.stdout || "O spotDL não gerou arquivos para este link.");
+			error.statusCode = 502;
+			throw error;
+		}
 
 		await runCommand("zip", ["-qr", zipPath, "."], {cwd: jobDir});
 		const bytesSent = (await fs.stat(zipPath)).size || await directorySize(jobDir);
@@ -512,7 +529,9 @@ function downloadArguments({type, format, quality, url}) {
 
 function friendlyError(error) {
 	const message = String(error?.message || error || "Erro interno.");
-	if (/spotdl|No such file|ENOENT/i.test(message)) return "O servidor precisa do spotDL instalado para links do Spotify.";
+	if (/Deprecated Feature: Support for Python version/i.test(message)) return "O spotDL precisa rodar com Python 3.10 ou superior no servidor.";
+	if (/spawn .*spotdl|spotdl.*ENOENT|No such file.*spotdl/i.test(message)) return "O servidor precisa do spotDL instalado para links do Spotify.";
+	if (/YT-DLP download error|YouTube Music returned no usable results|HTTP Error 403|403:\s*Forbidden/i.test(message)) return "O Spotify foi identificado, mas o áudio correspondente no YouTube foi bloqueado pelo IP do servidor. Configure proxy autorizado ou outro IP de saída.";
 	if (/No results found|Could not find|not found/i.test(message)) return "O spotDL não encontrou áudio correspondente para este link do Spotify.";
 	if (/ffmpeg/i.test(message)) return "O servidor precisa do ffmpeg instalado para converter ou juntar áudio e vídeo.";
 	if (/ENOENT|spawn .*yt-dlp|cannot find module|not found/i.test(message)) return "Não foi possível iniciar o yt-dlp no servidor. Confira YT_DLP_PATH ou a conexão para o download automático.";
