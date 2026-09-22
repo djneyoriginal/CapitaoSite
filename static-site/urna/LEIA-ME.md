@@ -15,7 +15,7 @@ A atividade tem cinco escolhas: deputado federal (4 dígitos), deputado estadual
 
 As listas mostram também candidaturas com renúncia ou indeferimento. Para simular a escolha pelo número, o programa ignora apenas os registros com situação exata `Renúncia` ou `Indeferido`; situações pendentes e em recurso aparecem conforme a fonte. Os números repetidos após renúncia são resolvidos para a candidatura que permaneceu na disputa. Essas regras são simplificações do simulador e não substituem a consulta ao [DivulgaCandContas do TSE](https://divulgacandcontas.tse.jus.br/) para a situação atual.
 
-As fotos dos presidenciáveis vieram dos perfis do g1 fornecidos pelo solicitante. O [TSE disponibiliza o arquivo oficial de fotos de São Paulo](https://dadosabertos.tse.jus.br/dataset/candidatos-2026), mas o download não estava acessível neste ambiente; por isso, esta versão exibe nome, número, partido e situação sem retrato para os cargos de SP. Não foram criados retratos artificiais.
+As fotos dos presidenciáveis vieram dos perfis do g1 fornecidos pelo solicitante. Para economizar espaço, os cargos de São Paulo usam um único avatar vetorial genérico enquanto as fotografias oficiais não são consolidadas. O [TSE disponibiliza o arquivo oficial de fotos de São Paulo](https://dadosabertos.tse.jus.br/dataset/candidatos-2026); nenhum retrato artificial foi criado.
 
 ## Apuração local
 

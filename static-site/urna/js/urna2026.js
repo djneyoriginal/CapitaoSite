@@ -265,16 +265,17 @@ function renderizar() {
 
   const candidato = escolha?.candidato || null;
   elementos.candidateData.hidden = !candidato;
-  elementos.candidatePhotoWrap.hidden = !candidato?.foto;
+  elementos.candidatePhotoWrap.hidden = !candidato;
   elementos.nullVote.hidden = escolha?.tipo !== "nulo";
   elementos.blankVote.hidden = escolha?.tipo !== "branco";
   if (candidato) {
     elementos.candidateName.textContent = candidato.nome.toUpperCase();
     elementos.candidateProject.textContent = [candidato.partido, candidato.situacao, candidato.status].filter(Boolean).join(" · ").toUpperCase();
-    if (candidato.foto) {
-      elementos.candidatePhoto.src = candidato.foto;
-      elementos.candidatePhoto.alt = `Fotografia de ${candidato.nome}`;
-    }
+    const usaAvatarGenerico = !candidato.foto;
+    elementos.candidatePhoto.src = candidato.foto || "assets/avatar-generico.svg";
+    elementos.candidatePhoto.alt = usaAvatarGenerico
+      ? `Avatar genérico de ${candidato.nome}; fotografia ainda não consolidada.`
+      : `Fotografia de ${candidato.nome}`;
   } else {
     elementos.candidatePhoto.removeAttribute("src");
     elementos.candidatePhoto.alt = "";
