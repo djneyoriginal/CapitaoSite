@@ -129,7 +129,7 @@ button:disabled { cursor: not-allowed; filter: grayscale(.18); opacity: .48; }
   min-height: 61px;
   padding: 9px 11px;
   display: grid;
-  grid-template-columns: 62px 1fr;
+  grid-template-columns: 62px 46px minmax(0, 1fr);
   align-items: center;
   gap: 11px;
   border: 1px solid rgb(44 54 50 / 11%);
@@ -138,6 +138,7 @@ button:disabled { cursor: not-allowed; filter: grayscale(.18); opacity: .48; }
   background: white;
 }
 .guide-number { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.guide-avatar { width: 46px; height: 54px; object-fit: cover; background: #e8eeeb; border-radius: 5px; }
 .guide-copy { min-width: 0; }
 .guide-copy strong, .guide-copy small { display: block; }
 .guide-copy strong { font-size: 13px; }
@@ -436,7 +437,7 @@ kbd { padding: 1px 4px; border: 1px solid #aab0ad; border-radius: 3px; backgroun
   .action-keys { width: min(330px, 100%); margin: 18px auto 0; }
   .keyboard-help { display: none; }
   .candidate-guide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .guide-card { grid-template-columns: 62px 1fr; }
+  .guide-card { grid-template-columns: 62px 46px minmax(0, 1fr); }
 }
 
 @media (max-width: 460px) {

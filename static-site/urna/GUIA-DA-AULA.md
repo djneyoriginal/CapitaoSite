@@ -11,14 +11,19 @@ Leia primeiro o HTML, depois os dados e por último o JavaScript. O projeto usa 
 | js/config.js | Lista presidencial fornecida pelo solicitante; ainda não importada do TSE. |
 | js/dados-sp.js | Exportação oficial de São Paulo, com fonte, data e registros por cargo. |
 | js/dados-governador.js | Sete registros para governador conferidos no sistema oficial do TSE. |
+| js/ids-fotos.js | Mapa dos IDs do TSE confirmados por cargo, nome e número para localizar a foto. |
+| js/classes.js | Classe-base `Candidatura` e classes dos cinco cargos; IDs únicos e avatar de cada instância. |
 | js/urna2026.js | Regras da sessão, eventos, validação, renderização e armazenamento local. |
 | assets/avatar-generico.svg | Avatar vetorial compartilhado para candidatos sem fotografia. |
+| assets/fotos-sp/ | Fotografias baixadas do pacote oficial do TSE e nomeadas pelo `SQ_CANDIDATO`. |
 
 As funções da lógica principal têm comentários de finalidade. Os blocos de HTML e CSS explicam estrutura e apresentação. A lista de milhares de candidatos é um conjunto de dados com o mesmo esquema para cada registro.
 
 ## Campos e fontes
 
 O número é uma string: não deve ser somado nem tratado como quantidade. O campo partido dos dados de São Paulo preserva a legenda da exportação, que pode conter partido, federação ou coligação. A situação de totalização não é o julgamento do registro: Concorrendo e Inapto não significam automaticamente Deferido e Indeferido.
+
+Uma classe representa o tipo de candidatura, não um partido. `DeputadoFederal`, `DeputadoEstadual`, `Senador`, `Governador` e `Presidente` herdam de `Candidatura`. O `id` identifica exclusivamente cada linha da urna; `idTse` é o identificador do cadastro eleitoral usado no arquivo da fotografia. Duas linhas históricas podem compartilhar `idTse`, mas não `id`. Se não houver vínculo fotográfico seguro, a propriedade `avatar` devolve o SVG genérico. As fotos presidenciais ainda são as dos perfis do g1, não do pacote do TSE.
 
 A consulta oficial de São Paulo é de 22/09/2026: 1.131 registros federais, 1.431 estaduais, 16 de Senado e sete de governador. A página usa uma cópia datada; não consulta o TSE automaticamente. A lista presidencial tem outra procedência, identificada no próprio código.
 
@@ -36,6 +41,7 @@ A consulta oficial de São Paulo é de 22/09/2026: 1.131 registros federais, 1.4
 - Localize estado e explique a diferença entre os dígitos atuais e as escolhas já confirmadas.
 - Siga digitar, classificarEscolha, confirmar, registrarSessao e renderizar para entender o fluxo.
 - Compare Array, Map e objetos: a lista permite busca textual; o Map permite busca direta por número.
+- Compare classe, herança e instância: encontre `new ClasseDoCargo` e observe `id`, `idTse`, `foto` e `avatar`. Digite 13 nas etapas de governador e presidente para ver que o mesmo número não identifica a mesma pessoa.
 - Estude escapar antes de inserir texto em HTML e a validação de inteiros ao recuperar localStorage.
 - Altere uma cor ou o tempo de conferência em uma cópia e observe o resultado.
 - Demonstre a diferença entre branco, número inexistente e candidatura inapta usando uma cópia de teste.

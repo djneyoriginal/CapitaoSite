@@ -29,6 +29,11 @@ const cargos = {
     candidates: presidencia.candidatos
   }
 };
+/** Converte os registros brutos em instâncias das classes ensinadas na aula. */
+for (const [id, cargo] of Object.entries(cargos)) {
+  const ClasseDoCargo = window.URNA_CLASSES[id];
+  cargo.candidates = cargo.candidates.map((registro, indice) => new ClasseDoCargo(registro, indice));
+}
 /** Há seis escolhas porque o Senado aparece duas vezes. */
 const etapas = [
   { cargo: "federal", titulo: "DEPUTADO FEDERAL" },
@@ -67,12 +72,15 @@ function obterIdAtual() { return etapas[estado.etapa].cargo; }
 
 /** Interrompe a inicialização se faltar uma lista ou se um número tiver tamanho incorreto. */
 function validarDados() {
+  const ids = new Set();
   for (const [id, cargo] of Object.entries(cargos)) {
     if (!Array.isArray(cargo.candidates) || cargo.candidates.length === 0) throw new Error(`Sem candidaturas: ${id}`);
     cargo.candidates.forEach((candidato) => {
       if (!/^\d+$/.test(candidato.numero) || candidato.numero.length !== cargo.digitos) {
         throw new Error(`Número inválido em ${id}: ${candidato.numero}`);
       }
+      if (ids.has(candidato.id)) throw new Error(`ID repetido: ${candidato.id}`);
+      ids.add(candidato.id);
     });
   }
 }
@@ -154,7 +162,12 @@ function iniciar() {
   elementos.guideOffice.addEventListener("change", () => { estado.guiaLimite = LIMITE_GUIA; renderizarGuia(); });
   elementos.candidateSearch.addEventListener("input", () => { estado.guiaLimite = LIMITE_GUIA; renderizarGuia(); });
   elementos.guideMore.addEventListener("click", () => { estado.guiaLimite += LIMITE_GUIA; renderizarGuia(); });
-  elementos.candidatePhoto.addEventListener("error", () => { elementos.candidatePhotoWrap.hidden = true; });
+  elementos.candidatePhoto.addEventListener("error", () => {
+    // Se a fotografia falhar no servidor, a tela continua mostrando um avatar.
+    if (elementos.candidatePhoto.src.endsWith("avatar-generico.svg")) return;
+    elementos.candidatePhoto.src = "assets/avatar-generico.svg";
+    elementos.candidatePhoto.alt = "Avatar genérico; fotografia indisponível.";
+  });
   document.addEventListener("keydown", tratarTecladoFisico);
   document.addEventListener("fullscreenchange", atualizarBotaoTelaCheia);
 
@@ -300,7 +313,7 @@ function renderizar() {
     elementos.candidateName.textContent = candidato.nome.toUpperCase();
     elementos.candidateProject.textContent = [candidato.partido, candidato.coligacao, candidato.situacao, candidato.status].filter(Boolean).join(" · ").toUpperCase();
     const usaAvatarGenerico = !candidato.foto;
-    elementos.candidatePhoto.src = candidato.foto || "assets/avatar-generico.svg";
+    elementos.candidatePhoto.src = candidato.avatar;
     elementos.candidatePhoto.alt = usaAvatarGenerico
       ? `Avatar genérico de ${candidato.nome}; fotografia ainda não consolidada.`
       : `Fotografia de ${candidato.nome}`;
@@ -336,10 +349,14 @@ function renderizarGuia() {
   const exibidos = encontrados.slice(0, estado.guiaLimite);
   elementos.guideCount.textContent = `${encontrados.length.toLocaleString("pt-BR")} candidaturas · exibindo ${exibidos.length.toLocaleString("pt-BR")}`;
   elementos.candidateGuide.innerHTML = exibidos.map((candidato) => `
-    <article class="guide-card${podeVotar(candidato) ? "" : " is-ineligible"}">
+    <article class="guide-card${podeVotar(candidato) ? "" : " is-ineligible"}" data-candidate-id="${escapar(candidato.id)}">
       <span class="guide-number">${escapar(candidato.numero)}</span>
+      <img class="guide-avatar" src="${escapar(candidato.avatar)}" alt="" loading="lazy">
       <span class="guide-copy"><strong>${escapar(candidato.nome)}</strong><small>${escapar(candidato.partido)}${candidato.coligacao ? ` · ${escapar(candidato.coligacao)}` : ""} · ${escapar(candidato.situacao || candidato.status)}</small></span>
     </article>`).join("");
+  elementos.candidateGuide.querySelectorAll(".guide-avatar").forEach((imagem) => {
+    imagem.addEventListener("error", () => { imagem.src = "assets/avatar-generico.svg"; }, { once: true });
+  });
   elementos.guideMore.hidden = exibidos.length >= encontrados.length;
   elementos.guideSource.replaceChildren();
   if (id === "presidente") {
