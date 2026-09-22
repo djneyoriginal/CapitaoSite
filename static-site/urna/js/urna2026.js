@@ -1,11 +1,12 @@
 "use strict";
 
 /* Simulação educativa dos cargos cadastrados para São Paulo em 2026. */
-/** As três fontes de dados são carregadas antes desta lógica pela ordem dos scripts defer. */
+/** As fontes de dados são carregadas antes desta lógica pela ordem dos scripts defer. */
 const dados = window.URNA_DADOS_SP;
+const dadosGovernador = window.URNA_DADOS_GOVERNADOR;
 const presidencia = window.URNA_CONFIG;
 /** Chave da apuração local. Os tempos abaixo estão em milissegundos. */
-const CHAVE = "urna-escola-sp-2026-cinco-votos-v1";
+const CHAVE = "urna-escola-sp-2026-seis-votos-v2";
 const DURACAO_FIM = 5000;
 const TEMPO_CONFERENCIA = 1000;
 const LIMITE_GUIA = 40;
@@ -21,18 +22,20 @@ const cargos = {
   federal: { nome: "DEPUTADO FEDERAL", digitos: 4, ...dados.federal },
   estadual: { nome: "DEPUTADO ESTADUAL", digitos: 5, ...dados.estadual },
   senador: { nome: "SENADOR", digitos: 3, ...dados.senador },
+  governador: { nome: "GOVERNADOR", digitos: 2, ...dadosGovernador },
   presidente: {
     nome: "PRESIDENTE DA REPÚBLICA", digitos: 2,
     source: "Perfis do g1 informados pelo usuário", extractedAt: "",
     candidates: presidencia.candidatos
   }
 };
-/** Há cinco escolhas porque o Senado aparece duas vezes. */
+/** Há seis escolhas porque o Senado aparece duas vezes. */
 const etapas = [
   { cargo: "federal", titulo: "DEPUTADO FEDERAL" },
   { cargo: "estadual", titulo: "DEPUTADO ESTADUAL" },
   { cargo: "senador", titulo: "SENADOR · PRIMEIRA VAGA" },
   { cargo: "senador", titulo: "SENADOR · SEGUNDA VAGA" },
+  { cargo: "governador", titulo: "GOVERNADOR" },
   { cargo: "presidente", titulo: "PRESIDENTE DA REPÚBLICA" }
 ];
 
@@ -212,7 +215,7 @@ function cancelarConferencia() {
   estado.liberado = false;
 }
 
-/** Guarda a escolha e avança; somente a quinta confirmação registra a sessão na apuração. */
+/** Guarda a escolha e avança; somente a sexta confirmação registra a sessão na apuração. */
 function confirmar() {
   if (estado.fase !== "votacao" || !estado.liberado) return;
   cancelarConferencia();
@@ -237,7 +240,7 @@ function confirmar() {
   anunciar(`Próxima escolha: ${etapas[estado.etapa].titulo}. Digite ${obterCargoAtual().digitos} números.`);
 }
 
-/** Soma as cinco escolhas aos totais locais e conta uma simulação concluída. */
+/** Soma as seis escolhas aos totais locais e conta uma simulação concluída. */
 function registrarSessao() {
   const apuracao = lerApuracao();
   estado.escolhas.forEach((escolha) => {
@@ -295,7 +298,7 @@ function renderizar() {
   elementos.blankVote.hidden = escolha?.tipo !== "branco";
   if (candidato) {
     elementos.candidateName.textContent = candidato.nome.toUpperCase();
-    elementos.candidateProject.textContent = [candidato.partido, candidato.situacao, candidato.status].filter(Boolean).join(" · ").toUpperCase();
+    elementos.candidateProject.textContent = [candidato.partido, candidato.coligacao, candidato.situacao, candidato.status].filter(Boolean).join(" · ").toUpperCase();
     const usaAvatarGenerico = !candidato.foto;
     elementos.candidatePhoto.src = candidato.foto || "assets/avatar-generico.svg";
     elementos.candidatePhoto.alt = usaAvatarGenerico
@@ -329,13 +332,13 @@ function renderizarGuia() {
   const cargo = cargos[id];
   const busca = semAcentos(elementos.candidateSearch.value.trim());
   const encontrados = cargo.candidates.filter((candidato) =>
-    semAcentos(`${candidato.nome} ${candidato.numero} ${candidato.partido}`).includes(busca));
+    semAcentos(`${candidato.nome} ${candidato.numero} ${candidato.partido} ${candidato.coligacao || ""}`).includes(busca));
   const exibidos = encontrados.slice(0, estado.guiaLimite);
   elementos.guideCount.textContent = `${encontrados.length.toLocaleString("pt-BR")} candidaturas · exibindo ${exibidos.length.toLocaleString("pt-BR")}`;
   elementos.candidateGuide.innerHTML = exibidos.map((candidato) => `
     <article class="guide-card${podeVotar(candidato) ? "" : " is-ineligible"}">
       <span class="guide-number">${escapar(candidato.numero)}</span>
-      <span class="guide-copy"><strong>${escapar(candidato.nome)}</strong><small>${escapar(candidato.partido)} · ${escapar(candidato.situacao || candidato.status)}</small></span>
+      <span class="guide-copy"><strong>${escapar(candidato.nome)}</strong><small>${escapar(candidato.partido)}${candidato.coligacao ? ` · ${escapar(candidato.coligacao)}` : ""} · ${escapar(candidato.situacao || candidato.status)}</small></span>
     </article>`).join("");
   elementos.guideMore.hidden = exibidos.length >= encontrados.length;
   elementos.guideSource.replaceChildren();

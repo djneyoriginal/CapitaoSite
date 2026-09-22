@@ -11,11 +11,12 @@
     O projeto não usa framework nem fontes externas. Isso permite abrir index.html
     diretamente ou servir a pasta em uma rede local, inclusive sem internet.
   -->
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/style.css?v=9">
   <!-- A versão na URL evita que tablets reutilizem scripts antigos após uma atualização em aula. -->
-  <script src="js/config.js?v=8" defer></script>
-  <script src="js/dados-sp.js?v=8" defer></script>
-  <script src="js/urna2026.js?v=8" defer></script>
+  <script src="js/config.js?v=9" defer></script>
+  <script src="js/dados-sp.js?v=9" defer></script>
+  <script src="js/dados-governador.js?v=9" defer></script>
+  <script src="js/urna2026.js?v=9" defer></script>
 </head>
 <body>
   <!-- A faixa deixa claro, em qualquer tamanho de tela, que esta não é uma urna oficial. -->
@@ -147,7 +148,7 @@
     <aside class="lesson-panel" aria-labelledby="lessonTitle">
       <p class="eyebrow">ATIVIDADE DE CIDADANIA</p>
       <h1 id="lessonTitle">Eleições 2026 · São Paulo</h1>
-      <p class="guide-intro">Consulte as candidaturas antes de digitar. A simulação percorre deputado federal, deputado estadual, duas escolhas para senador e presidente.</p>
+      <p class="guide-intro">Consulte as candidaturas antes de digitar. A simulação percorre deputado federal, deputado estadual, duas escolhas para senador, governador e presidente.</p>
       <div class="guide-tools">
         <div class="guide-field">
           <label for="guideOffice">Cargo</label>
@@ -155,6 +156,7 @@
             <option value="federal">Deputado federal</option>
             <option value="estadual">Deputado estadual</option>
             <option value="senador">Senador</option>
+            <option value="governador">Governador</option>
             <option value="presidente">Presidente</option>
           </select>
         </div>
@@ -188,6 +190,7 @@
         <option value="federal">Deputado federal</option>
         <option value="estadual">Deputado estadual</option>
         <option value="senador">Senador (duas vagas)</option>
+        <option value="governador">Governador</option>
         <option value="presidente">Presidente</option>
       </select>
     </label>
