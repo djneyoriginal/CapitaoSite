@@ -10,7 +10,7 @@ const LIMITE_GUIA = 40;
 
 function podeVotar(candidato) {
   if (candidato.votavel === false) return false;
-  return !["Renúncia", "Indeferido"].includes(candidato.status);
+  return candidato.situacao !== "Inapto" && !["Renúncia", "Indeferido"].includes(candidato.status);
 }
 
 const cargos = {
@@ -116,7 +116,7 @@ function iniciar() {
     "keyHint", "blankButton", "correctButton", "confirmButton", "guideOffice",
     "candidateSearch", "candidateGuide", "guideCount", "guideMore", "guideSource",
     "soundButton", "fullscreenButton", "resultsButton", "resultsDialog",
-    "resultsOffice", "resultsList", "totalVotes", "validVotes", "resetButton",
+    "resultsOffice", "resultsList", "dragonReward", "dragonWinner", "totalVotes", "validVotes", "resetButton",
     "exportButton", "toast", "announcer"
   ].forEach((id) => { elementos[id] = document.getElementById(id); });
 
@@ -307,7 +307,7 @@ function renderizarGuia() {
   elementos.candidateGuide.innerHTML = exibidos.map((candidato) => `
     <article class="guide-card${podeVotar(candidato) ? "" : " is-ineligible"}">
       <span class="guide-number">${escapar(candidato.numero)}</span>
-      <span class="guide-copy"><strong>${escapar(candidato.nome)}</strong><small>${escapar(candidato.partido)} · ${escapar(candidato.status)}</small></span>
+      <span class="guide-copy"><strong>${escapar(candidato.nome)}</strong><small>${escapar(candidato.partido)} · ${escapar(candidato.situacao || candidato.status)}</small></span>
     </article>`).join("");
   elementos.guideMore.hidden = exibidos.length >= encontrados.length;
   elementos.guideSource.replaceChildren();
@@ -315,12 +315,12 @@ function renderizarGuia() {
     elementos.guideSource.textContent = cargo.source + ". Situações sujeitas a alterações.";
   } else {
     const ancora = document.createElement("a");
-    ancora.href = cargo.source;
+    ancora.href = cargo.sourceUrl || cargo.source;
     ancora.target = "_blank";
     ancora.rel = "noopener noreferrer";
-    ancora.textContent = "Lista publicada pelo UOL";
+    ancora.textContent = "Lista oficial do TSE";
     elementos.guideSource.append(ancora,
-      ` · dados do TSE consultados em ${new Date(cargo.extractedAt).toLocaleDateString("pt-BR")}. Situações sujeitas a alterações.`);
+      ` · exportação consultada em ${new Date(`${cargo.extractedAt}T12:00:00`).toLocaleDateString("pt-BR")}. Situações sujeitas a alterações.`);
   }
 }
 
@@ -341,6 +341,9 @@ function renderizarResultados() {
     .filter((candidato) => votos[candidato.numero] > 0)
     .map((candidato) => ({ numero: candidato.numero, nome: candidato.nome, votos: votos[candidato.numero] }))
     .sort((a, b) => b.votos - a.votos || a.nome.localeCompare(b.nome, "pt-BR"));
+  const lider = linhas.length > 1 && linhas[0].votos === linhas[1].votos ? null : linhas[0] || null;
+  elementos.dragonReward.hidden = !lider;
+  elementos.dragonWinner.textContent = lider ? lider.nome : "";
   linhas.push({ numero: "—", nome: "Votos em branco", votos: votos.branco },
               { numero: "—", nome: "Votos nulos", votos: votos.nulo });
   const maior = Math.max(...linhas.map((linha) => linha.votos), 1);
@@ -365,7 +368,7 @@ function exportarResultados() {
   const linhas = [["cargo", "numero", "candidato ou opcao", "partido", "situacao", "votos"]];
   for (const [id, cargo] of Object.entries(cargos)) {
     for (const candidato of candidatosPorNumero[id].values()) {
-      linhas.push([cargo.nome, candidato.numero, candidato.nome, candidato.partido, candidato.status,
+      linhas.push([cargo.nome, candidato.numero, candidato.nome, candidato.partido, candidato.situacao || candidato.status,
         apuracao.cargos[id][candidato.numero]]);
     }
     linhas.push([cargo.nome, "", "Votos em branco", "", "", apuracao.cargos[id].branco]);

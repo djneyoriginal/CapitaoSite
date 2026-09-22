@@ -8,17 +8,17 @@ A atividade tem cinco escolhas: deputado federal (4 dígitos), deputado estadual
 
 | Cargo | Registros | Fonte | Dados consultados pela fonte |
 | --- | ---: | --- | --- |
-| Deputado federal, SP | 1.131 | [UOL](https://noticias.uol.com.br/eleicoes/2026/09/21/veja-lista-dos-candidatos-a-deputado-federal-por-sao-paulo-em-2026.ghtm) | 21/09/2026, 05h30 |
-| Deputado estadual, SP | 1.430 | [UOL](https://noticias.uol.com.br/eleicoes/2026/09/18/candidatos-deputado-estadual-sao-paulo-sp-2026.ghtm) | 17/09/2026, 05h30 |
-| Senador, SP | 15 | [UOL](https://noticias.uol.com.br/eleicoes/2026/09/21/veja-lista-dos-candidatos-ao-senado-por-sao-paulo-em-2026.ghtm) | 21/09/2026, 05h30 |
+| Deputado federal, SP | 1.131 | [TSE · DivulgaCandContas](https://divulgacandcontas.tse.jus.br/divulga/#/candidato/SUDESTE/SP/20322002026) | 22/09/2026 |
+| Deputado estadual, SP | 1.431 | [TSE · DivulgaCandContas](https://divulgacandcontas.tse.jus.br/divulga/#/candidato/SUDESTE/SP/20322002026) | 22/09/2026 |
+| Senador, SP | 16 | [TSE · DivulgaCandContas](https://divulgacandcontas.tse.jus.br/divulga/#/candidato/SUDESTE/SP/20322002026) | 22/09/2026 |
 | Presidente | 14 | Perfis do g1 indicados pelo solicitante | Informados em 22/09/2026 |
 
-As listas mostram também candidaturas com renúncia ou indeferimento. Para simular a escolha pelo número, o programa ignora apenas os registros com situação exata `Renúncia` ou `Indeferido`; situações pendentes e em recurso aparecem conforme a fonte. Os números repetidos após renúncia são resolvidos para a candidatura que permaneceu na disputa. Essas regras são simplificações do simulador e não substituem a consulta ao [DivulgaCandContas do TSE](https://divulgacandcontas.tse.jus.br/) para a situação atual.
+As listas de São Paulo preservam os registros exportados pelo TSE, inclusive os marcados como `Inapto`, que não recebem votos no simulador. O campo de legenda preserva o partido, a federação ou a coligação informado na exportação. A situação de totalização (`Concorrendo` ou `Inapto`) não equivale ao julgamento do registro. Os dados são uma consulta datada de 22/09/2026, sem atualização automática contínua. Consulte o [DivulgaCandContas do TSE](https://divulgacandcontas.tse.jus.br/) para a situação atual. Na lista presidencial fornecida pelo solicitante, registros com `Renúncia`, `Indeferido` ou impedimento explícito também não recebem votos.
 
 As fotos dos presidenciáveis vieram dos perfis do g1 fornecidos pelo solicitante. Para economizar espaço, os cargos de São Paulo usam um único avatar vetorial genérico enquanto as fotografias oficiais não são consolidadas. O [TSE disponibiliza o arquivo oficial de fotos de São Paulo](https://dadosabertos.tse.jus.br/dataset/candidatos-2026); nenhum retrato artificial foi criado.
 
 ## Apuração local
 
-Uma simulação é registrada somente depois da quinta confirmação. O painel do professor separa os votos por cargo e exporta CSV. Os totais ficam apenas no armazenamento do navegador usado; a lista pública do site não recebe votos. O botão “Zerar atividade” apaga essa apuração local.
+Uma simulação é registrada somente depois da quinta confirmação. O painel do professor separa os votos por cargo e exporta CSV. Os totais ficam apenas no armazenamento do navegador usado; a lista pública do site não recebe votos. O botão “Zerar atividade” apaga essa apuração local. O líder isolado da apuração local recebe uma recompensa visual com sete Esferas do Dragão; em empate ou sem votos, a recompensa fica oculta.
 
 Este projeto é educativo e independente. Ele não representa a Justiça Eleitoral e não serve para votação oficial.

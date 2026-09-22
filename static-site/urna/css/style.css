@@ -378,6 +378,11 @@ kbd { padding: 1px 4px; border: 1px solid #aab0ad; border-radius: 3px; backgroun
 .result-track { height: 7px; overflow: hidden; border-radius: 999px; background: #e3e8e5; }
 .result-track i { height: 100%; display: block; border-radius: inherit; background: #387a60; }
 .result-row > strong { text-align: right; font-size: 12px; }
+.dragon-reward { margin-top: 14px; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid #e8c161; border-radius: 12px; background: #fff8df; }
+.dragon-reward strong, .dragon-reward span { display: block; }
+.dragon-kicker { margin-bottom: 3px; color: #8a5d00; font-size: 10px; font-weight: 800; letter-spacing: .06em; }
+.dragon-balls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; max-width: 180px; }
+.dragon-ball { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; color: #b3221b; border: 1px solid #c68b1b; background: radial-gradient(circle at 35% 30%, #fff1a6 0 12%, #f6bb2e 45%, #d8840b 100%); font-size: 6px; letter-spacing: -1px; line-height: 1; }
 .dialog-actions { margin-top: 18px; display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
 .secondary-button, .danger-button { min-height: 44px; padding: 0 14px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 800; }
 .secondary-button { color: #31443c; border: 1px solid #aab5b0; background: white; }
@@ -454,6 +459,8 @@ kbd { padding: 1px 4px; border: 1px solid #aab0ad; border-radius: 3px; backgroun
   .keypad button { height: 54px; }
   .candidate-guide { grid-template-columns: 1fr; }
   .results-summary { grid-template-columns: 1fr; }
+  .dragon-reward { align-items: flex-start; flex-direction: column; }
+  .dragon-balls { justify-content: flex-start; max-width: none; }
   .result-row { grid-template-columns: 28px minmax(100px, 1fr) 60px 25px; gap: 7px; }
 }
 
