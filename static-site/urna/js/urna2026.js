@@ -11,7 +11,7 @@ const DURACAO_FIM = 5000;
 const TEMPO_CONFERENCIA = 1000;
 const LIMITE_GUIA = 40;
 
-/** Aplica as regras educativas de elegibilidade; a lista continua exibindo os registros inaptos. */
+/** Define as candidaturas ativas; registros inaptos não entram na urna nem na legenda. */
 function podeVotar(candidato) {
   if (candidato.votavel === false) return false;
   return candidato.situacao !== "Inapto" && !["Renúncia", "Indeferido"].includes(candidato.status);
@@ -32,7 +32,9 @@ const cargos = {
 /** Converte os registros brutos em instâncias das classes ensinadas na aula. */
 for (const [id, cargo] of Object.entries(cargos)) {
   const ClasseDoCargo = window.URNA_CLASSES[id];
-  cargo.candidates = cargo.candidates.map((registro, indice) => new ClasseDoCargo(registro, indice));
+  cargo.candidates = cargo.candidates
+    .filter(podeVotar)
+    .map((registro, indice) => new ClasseDoCargo(registro, indice));
 }
 /** Há seis escolhas porque o Senado aparece duas vezes. */
 const etapas = [
@@ -144,7 +146,7 @@ function iniciar() {
     "candidateSearch", "candidateGuide", "guideCount", "guideMore", "guideSource",
     "soundButton", "fullscreenButton", "resultsButton", "resultsDialog",
     "resultsOffice", "resultsList", "dragonReward", "dragonWinner", "totalVotes", "validVotes", "resetButton",
-    "exportButton", "toast", "announcer"
+    "exportButton", "exportPdfButton", "toast", "announcer"
   ].forEach((id) => { elementos[id] = document.getElementById(id); });
 
   document.querySelectorAll("[data-number]").forEach((tecla) => {
@@ -159,6 +161,7 @@ function iniciar() {
   elementos.resultsOffice.addEventListener("change", renderizarResultados);
   elementos.resetButton.addEventListener("click", zerarResultados);
   elementos.exportButton.addEventListener("click", exportarResultados);
+  elementos.exportPdfButton.addEventListener("click", exportarResultadosPdf);
   elementos.guideOffice.addEventListener("change", () => { estado.guiaLimite = LIMITE_GUIA; renderizarGuia(); });
   elementos.candidateSearch.addEventListener("input", () => { estado.guiaLimite = LIMITE_GUIA; renderizarGuia(); });
   elementos.guideMore.addEventListener("click", () => { estado.guiaLimite += LIMITE_GUIA; renderizarGuia(); });
@@ -311,7 +314,7 @@ function renderizar() {
   elementos.blankVote.hidden = escolha?.tipo !== "branco";
   if (candidato) {
     elementos.candidateName.textContent = candidato.nome.toUpperCase();
-    elementos.candidateProject.textContent = [candidato.partido, candidato.coligacao, candidato.situacao, candidato.status].filter(Boolean).join(" · ").toUpperCase();
+    elementos.candidateProject.textContent = [candidato.partido, candidato.coligacao].filter(Boolean).join(" · ").toUpperCase();
     const usaAvatarGenerico = !candidato.foto;
     elementos.candidatePhoto.src = candidato.avatar;
     elementos.candidatePhoto.alt = usaAvatarGenerico
@@ -339,7 +342,7 @@ function escapar(texto) {
   })[caractere]);
 }
 
-/** Filtra os candidatos e exibe um lote por vez para manter leve a lista de consulta. */
+/** Filtra candidaturas ativas e exibe um lote por vez para manter leve a lista de consulta. */
 function renderizarGuia() {
   const id = elementos.guideOffice.value;
   const cargo = cargos[id];
@@ -349,10 +352,10 @@ function renderizarGuia() {
   const exibidos = encontrados.slice(0, estado.guiaLimite);
   elementos.guideCount.textContent = `${encontrados.length.toLocaleString("pt-BR")} candidaturas · exibindo ${exibidos.length.toLocaleString("pt-BR")}`;
   elementos.candidateGuide.innerHTML = exibidos.map((candidato) => `
-    <article class="guide-card${podeVotar(candidato) ? "" : " is-ineligible"}" data-candidate-id="${escapar(candidato.id)}">
+    <article class="guide-card" data-candidate-id="${escapar(candidato.id)}">
       <span class="guide-number">${escapar(candidato.numero)}</span>
       <img class="guide-avatar" src="${escapar(candidato.avatar)}" alt="" loading="lazy">
-      <span class="guide-copy"><strong>${escapar(candidato.nome)}</strong><small>${escapar(candidato.partido)}${candidato.coligacao ? ` · ${escapar(candidato.coligacao)}` : ""} · ${escapar(candidato.situacao || candidato.status)}</small></span>
+      <span class="guide-copy"><strong>${escapar(candidato.nome)}</strong><small>${escapar(candidato.partido)}${candidato.coligacao ? ` · ${escapar(candidato.coligacao)}` : ""}</small></span>
     </article>`).join("");
   elementos.candidateGuide.querySelectorAll(".guide-avatar").forEach((imagem) => {
     imagem.addEventListener("error", () => { imagem.src = "assets/avatar-generico.svg"; }, { once: true });
@@ -417,14 +420,13 @@ function zerarResultados() {
 /** Cria um CSV dos totais locais, com separador de ponto e vírgula e texto entre aspas. */
 function exportarResultados() {
   const apuracao = lerApuracao();
-  const linhas = [["cargo", "numero", "candidato ou opcao", "partido", "situacao", "votos"]];
+  const linhas = [["cargo", "numero", "candidato ou opcao", "partido", "votos"]];
   for (const [id, cargo] of Object.entries(cargos)) {
     for (const candidato of candidatosPorNumero[id].values()) {
-      linhas.push([cargo.nome, candidato.numero, candidato.nome, candidato.partido, candidato.situacao || candidato.status,
-        apuracao.cargos[id][candidato.numero]]);
+      linhas.push([cargo.nome, candidato.numero, candidato.nome, candidato.partido, apuracao.cargos[id][candidato.numero]]);
     }
-    linhas.push([cargo.nome, "", "Votos em branco", "", "", apuracao.cargos[id].branco]);
-    linhas.push([cargo.nome, "", "Votos nulos", "", "", apuracao.cargos[id].nulo]);
+    linhas.push([cargo.nome, "", "Votos em branco", "", apuracao.cargos[id].branco]);
+    linhas.push([cargo.nome, "", "Votos nulos", "", apuracao.cargos[id].nulo]);
   }
   const csv = "\uFEFF" + linhas.map((linha) => linha.map((valor) =>
     `"${String(valor).replaceAll('"', '""')}"`).join(";")).join("\r\n");
@@ -432,6 +434,52 @@ function exportarResultados() {
   const link = document.createElement("a");
   link.href = url;
   link.download = "resultado-urna-escola-sp-2026.csv";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** Gera um PDF leve do cargo selecionado, sem depender de serviços externos ou pop-ups. */
+function exportarResultadosPdf() {
+  const apuracao = lerApuracao();
+  const id = elementos.resultsOffice.value;
+  const cargo = cargos[id];
+  const votos = apuracao.cargos[id];
+  const linhas = [...candidatosPorNumero[id].values()]
+    .filter((candidato) => votos[candidato.numero] > 0)
+    .map((candidato) => `${candidato.numero}  ${candidato.nome} (${candidato.partido}) — ${votos[candidato.numero]} voto(s)`)
+    .sort((a, b) => a.localeCompare(b, "pt-BR"));
+  linhas.push(`Votos em branco — ${votos.branco}`, `Votos nulos — ${votos.nulo}`);
+  const conteudo = [
+    "URNA ESCOLA — RESULTADO DA SIMULAÇÃO",
+    cargo.nome,
+    `Simulações concluídas: ${apuracao.sessoes}`,
+    "",
+    ...linhas
+  ];
+  const escaparPdf = (texto) => String(texto).replace(/[\\()]/g, "\\$&").replace(/[^\x20-\x7E]/g, "?");
+  const comandos = conteudo.map((linha, indice) =>
+    `BT /F1 ${indice < 2 ? 15 : 11} Tf 50 ${790 - indice * 16} Td (${escaparPdf(linha)}) Tj ET`).join("\n");
+  const objetos = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
+    `<< /Length ${comandos.length} >>\nstream\n${comandos}\nendstream`,
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
+  ];
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objetos.forEach((objeto, indice) => {
+    offsets.push(pdf.length);
+    pdf += `${indice + 1} 0 obj\n${objeto}\nendobj\n`;
+  });
+  const inicioXref = pdf.length;
+  pdf += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`;
+  offsets.slice(1).forEach((offset) => { pdf += `${String(offset).padStart(10, "0")} 00000 n \n`; });
+  pdf += `trailer\n<< /Size ${objetos.length + 1} /Root 1 0 R >>\nstartxref\n${inicioXref}\n%%EOF`;
+  const url = URL.createObjectURL(new Blob([pdf], { type: "application/pdf" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `resultado-${id}-urna-escola-sp-2026.pdf`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
