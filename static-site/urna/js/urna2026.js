@@ -351,7 +351,7 @@ function renderizarGuia() {
     ancora.rel = "noopener noreferrer";
     ancora.textContent = "Lista oficial do TSE";
     elementos.guideSource.append(ancora,
-      ` · exportação consultada em ${new Date(`${cargo.extractedAt}T12:00:00`).toLocaleDateString("pt-BR")}. Situações sujeitas a alterações.`);
+      ` · dados consultados em ${new Date(`${cargo.extractedAt}T12:00:00`).toLocaleDateString("pt-BR")}. Situações sujeitas a alterações.`);
   }
 }
 
