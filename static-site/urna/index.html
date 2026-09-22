@@ -8,14 +8,14 @@
   <title>Urna Escola — simulador educacional</title>
 
   <!--
-    O projeto não usa framework nem fontes externas. Isso permite abrir urna.html
+    O projeto não usa framework nem fontes externas. Isso permite abrir index.html
     diretamente ou servir a pasta em uma rede local, inclusive sem internet.
   -->
-  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=8">
   <!-- A versão na URL evita que tablets reutilizem scripts antigos após uma atualização em aula. -->
-  <script src="js/config.js?v=7" defer></script>
-  <script src="js/dados-sp.js?v=7" defer></script>
-  <script src="js/urna2026.js?v=7" defer></script>
+  <script src="js/config.js?v=8" defer></script>
+  <script src="js/dados-sp.js?v=8" defer></script>
+  <script src="js/urna2026.js?v=8" defer></script>
 </head>
 <body>
   <!-- A faixa deixa claro, em qualquer tamanho de tela, que esta não é uma urna oficial. -->
@@ -192,6 +192,7 @@
       </select>
     </label>
     <div class="results-list" id="resultsList"></div>
+    <!-- Recompensa da simulação local: fica oculta em caso de empate ou ausência de votos. -->
     <section class="dragon-reward" id="dragonReward" hidden aria-live="polite">
       <div>
         <span class="dragon-kicker">RECOMPENSA DA APURAÇÃO LOCAL</span>

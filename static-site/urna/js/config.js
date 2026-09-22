@@ -1,6 +1,13 @@
 "use strict";
 
-/* Dados públicos de candidaturas presidenciais de 2026. Simulador educacional, não oficial. */
+/*
+ * Lista presidencial fornecida pelo solicitante a partir de perfis do g1.
+ * Esta lista ainda não foi substituída por uma exportação oficial do TSE.
+ * numero é texto para preservar dígitos; foto é um caminho relativo ao HTML.
+ * situacao descreve a disputa; status descreve o registro informado pela fonte.
+ * votavel bloqueia explicitamente a candidatura no simulador.
+ * Object.freeze evita mudanças acidentais nos registros durante a execução.
+ */
 window.URNA_CONFIG = Object.freeze({
   candidatos: Object.freeze([
     Object.freeze({ numero: "27", nome: "Clariana Barão", partido: "DC", situacao: "Concorrendo", status: "Deferido", foto: "assets/clariana-barao.jpg", cor: "#157a6e", votavel: true }),

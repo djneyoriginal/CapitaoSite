@@ -378,6 +378,7 @@ kbd { padding: 1px 4px; border: 1px solid #aab0ad; border-radius: 3px; backgroun
 .result-track { height: 7px; overflow: hidden; border-radius: 999px; background: #e3e8e5; }
 .result-track i { height: 100%; display: block; border-radius: inherit; background: #387a60; }
 .result-row > strong { text-align: right; font-size: 12px; }
+/* Esta recompensa sinaliza só o líder local; não representa uma eleição oficial. */
 .dragon-reward { margin-top: 14px; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid #e8c161; border-radius: 12px; background: #fff8df; }
 .dragon-reward strong, .dragon-reward span { display: block; }
 .dragon-kicker { margin-bottom: 3px; color: #8a5d00; font-size: 10px; font-weight: 800; letter-spacing: .06em; }

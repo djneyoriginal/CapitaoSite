@@ -2,6 +2,8 @@
 
 Abra `index.html` em um navegador ou publique todo o conteúdo desta pasta na rota `/urna/` de um servidor web. A simulação funciona sem conexão depois de instalada; os dados e as fotos presidenciais estão no pacote.
 
+Para preparar uma aula de leitura do código, use o [guia didático](GUIA-DA-AULA.md). A função de cada parte da lógica está comentada em `js/urna2026.js`.
+
 ## Cargos e dados
 
 A atividade tem cinco escolhas: deputado federal (4 dígitos), deputado estadual (5), senador para a primeira vaga (3), senador para a segunda vaga (3) e presidente (2). Há duas vagas no Senado em 2026; repetir o mesmo número na segunda escolha produz voto nulo nessa vaga. O cargo de governador não está cadastrado nesta versão.
