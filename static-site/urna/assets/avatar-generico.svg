@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300" role="img" aria-label="Avatar genérico de candidatura">
+  <rect width="240" height="300" fill="#dfe6ea"/>
+  <circle cx="120" cy="96" r="51" fill="#92a5af"/>
+  <path d="M30 280c9-71 47-112 90-112s81 41 90 112" fill="#92a5af"/>
+  <path d="M35 280h170" stroke="#607781" stroke-width="8"/>
+</svg>
