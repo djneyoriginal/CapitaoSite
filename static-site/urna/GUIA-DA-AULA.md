@@ -21,7 +21,7 @@ As funções da lógica principal têm comentários de finalidade. Os blocos de 
 
 ## Campos e fontes
 
-O número é uma string: não deve ser somado nem tratado como quantidade. O campo partido dos dados de São Paulo preserva a legenda da exportação, que pode conter partido, federação ou coligação. A situação de totalização não é o julgamento do registro: Concorrendo e Inapto não significam automaticamente Deferido e Indeferido.
+O número é uma string: não deve ser somado nem tratado como quantidade. O campo partido dos dados de São Paulo preserva a legenda da exportação, que pode conter partido, federação ou coligação. A urna filtra os registros inaptos antes de montar a votação e a consulta; nos cartões, exibe somente número, nome e legenda.
 
 Uma classe representa o tipo de candidatura, não um partido. `DeputadoFederal`, `DeputadoEstadual`, `Senador`, `Governador` e `Presidente` herdam de `Candidatura`. O `id` identifica exclusivamente cada linha da urna; `idTse` é o identificador do cadastro eleitoral usado no arquivo da fotografia. Duas linhas históricas podem compartilhar `idTse`, mas não `id`. Se não houver vínculo fotográfico seguro, a propriedade `avatar` devolve o SVG genérico. As fotos presidenciais ainda são as dos perfis do g1, não do pacote do TSE.
 
@@ -34,7 +34,7 @@ A consulta oficial de São Paulo é de 22/09/2026: 1.131 registros federais, 1.4
 3. Complete deputado estadual e as duas escolhas de Senado. Repita o mesmo senador na segunda vaga para demonstrar o voto nulo dessa vaga.
 4. Confirme governador e presidente. A apuração só muda quando as seis escolhas terminam. O 13 identifica Fernando Haddad na etapa de governador e Lula na etapa de presidente.
 5. Abra o painel do professor e troque o cargo exibido. Com um único líder, aparecem as sete Esferas do Dragão. Em empate ou sem votos, a recompensa fica oculta.
-6. Exporte o CSV e compare os totais. Os resultados pertencem a este navegador, não a todos os visitantes do site.
+6. Exporte o PDF paginado ou o CSV e compare os totais. Os resultados pertencem a este navegador, não a todos os visitantes do site.
 
 ## Exercícios de programação
 

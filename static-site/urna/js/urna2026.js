@@ -417,6 +417,21 @@ function zerarResultados() {
   mostrarToast("Apuração local zerada.");
 }
 
+/** Inicia um download por Blob com um link temporário anexado ao documento. */
+function baixarArquivo(blob, nomeArquivo) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = nomeArquivo;
+  link.hidden = true;
+  document.body.append(link);
+  link.click();
+  setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 10000);
+}
+
 /** Cria um CSV dos totais locais, com separador de ponto e vírgula e texto entre aspas. */
 function exportarResultados() {
   const apuracao = lerApuracao();
@@ -430,43 +445,141 @@ function exportarResultados() {
   }
   const csv = "\uFEFF" + linhas.map((linha) => linha.map((valor) =>
     `"${String(valor).replaceAll('"', '""')}"`).join(";")).join("\r\n");
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "resultado-urna-escola-sp-2026.csv";
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  baixarArquivo(new Blob([csv], { type: "text/csv;charset=utf-8" }), "resultado-urna-escola-sp-2026.csv");
+  mostrarToast("Arquivo CSV preparado para download.");
 }
 
-/** Gera um PDF leve do cargo selecionado, sem depender de serviços externos ou pop-ups. */
-function exportarResultadosPdf() {
-  const apuracao = lerApuracao();
-  const id = elementos.resultsOffice.value;
-  const cargo = cargos[id];
-  const votos = apuracao.cargos[id];
-  const linhas = [...candidatosPorNumero[id].values()]
-    .filter((candidato) => votos[candidato.numero] > 0)
-    .map((candidato) => `${candidato.numero}  ${candidato.nome} (${candidato.partido}) — ${votos[candidato.numero]} voto(s)`)
-    .sort((a, b) => a.localeCompare(b, "pt-BR"));
-  linhas.push(`Votos em branco — ${votos.branco}`, `Votos nulos — ${votos.nulo}`);
-  const conteudo = [
-    "URNA ESCOLA — RESULTADO DA SIMULAÇÃO",
-    cargo.nome,
-    `Simulações concluídas: ${apuracao.sessoes}`,
-    "",
-    ...linhas
-  ];
-  const escaparPdf = (texto) => String(texto).replace(/[\\()]/g, "\\$&").replace(/[^\x20-\x7E]/g, "?");
-  const comandos = conteudo.map((linha, indice) =>
-    `BT /F1 ${indice < 2 ? 15 : 11} Tf 50 ${790 - indice * 16} Td (${escaparPdf(linha)}) Tj ET`).join("\n");
+/** Bytes adicionais usados pela codificação WinAnsi dos textos do PDF. */
+const WIN_ANSI = new Map([
+  [0x20AC, 128], [0x201A, 130], [0x0192, 131], [0x201E, 132], [0x2026, 133],
+  [0x2020, 134], [0x2021, 135], [0x02C6, 136], [0x2030, 137], [0x0160, 138],
+  [0x2039, 139], [0x0152, 140], [0x017D, 142], [0x2018, 145], [0x2019, 146],
+  [0x201C, 147], [0x201D, 148], [0x2022, 149], [0x2013, 150], [0x2014, 151],
+  [0x02DC, 152], [0x2122, 153], [0x0161, 154], [0x203A, 155], [0x0153, 156],
+  [0x017E, 158], [0x0178, 159]
+]);
+
+/** Converte texto Unicode para os bytes aceitos pela fonte Helvetica/WinAnsi do PDF. */
+function codificarWinAnsi(texto) {
+  let binario = "";
+  for (const caractere of String(texto).normalize("NFC")) {
+    const codigo = caractere.codePointAt(0);
+    if (codigo >= 32 && codigo <= 255) binario += String.fromCharCode(codigo);
+    else if (WIN_ANSI.has(codigo)) binario += String.fromCharCode(WIN_ANSI.get(codigo));
+    else binario += "?";
+  }
+  return binario;
+}
+
+/** Protege os delimitadores de strings literais do formato PDF. */
+function escaparTextoPdf(texto) {
+  const limpo = String(texto).replace(/[\r\n\t]+/g, " ");
+  return codificarWinAnsi(limpo).replace(/[\\()]/g, "\\$&");
+}
+
+/** Quebra uma linha longa sem cortar palavras ou ultrapassar a largura útil da página. */
+function quebrarTextoPdf(texto, limite = 78) {
+  const palavras = String(texto).trim().split(/\s+/).filter(Boolean);
+  const linhas = [];
+  let atual = "";
+  for (let palavra of palavras) {
+    while (palavra.length > limite) {
+      if (atual) { linhas.push(atual); atual = ""; }
+      linhas.push(palavra.slice(0, limite));
+      palavra = palavra.slice(limite);
+    }
+    const candidata = atual ? `${atual} ${palavra}` : palavra;
+    if (candidata.length <= limite) atual = candidata;
+    else { linhas.push(atual); atual = palavra; }
+  }
+  if (atual) linhas.push(atual);
+  return linhas.length ? linhas : [""];
+}
+
+/** Monta as páginas de todos os cargos, ordenando candidaturas por quantidade de votos. */
+function criarPaginasResultadosPdf(apuracao, geradoEm) {
+  const paginas = [];
+  for (const [id, cargo] of Object.entries(cargos)) {
+    const votos = apuracao.cargos[id];
+    const candidatos = [...candidatosPorNumero[id].values()]
+      .filter((candidato) => votos[candidato.numero] > 0)
+      .map((candidato) => ({ candidato, votos: votos[candidato.numero] }))
+      .sort((a, b) => b.votos - a.votos || a.candidato.nome.localeCompare(b.candidato.nome, "pt-BR"));
+    const votosCandidaturas = candidatos.reduce((total, item) => total + item.votos, 0);
+    const totalCargo = votosCandidaturas + votos.branco + votos.nulo;
+    const grupos = [];
+    if (!candidatos.length) grupos.push([{ texto: "Nenhum voto em candidatura neste cargo.", fonte: "F1" }]);
+    candidatos.forEach(({ candidato, votos: quantidade }) => {
+      const rotulo = quantidade === 1 ? "voto" : "votos";
+      const grupo = quebrarTextoPdf(`${candidato.numero} - ${candidato.nome} (${candidato.partido}) - ${quantidade.toLocaleString("pt-BR")} ${rotulo}`)
+        .map((texto, indice) => ({ texto: `${indice ? "    " : ""}${texto}`, fonte: "F1" }));
+      grupos.push(grupo);
+    });
+    grupos.push(
+      [{ texto: `Votos em branco - ${votos.branco.toLocaleString("pt-BR")}`, fonte: "F2" }],
+      [{ texto: `Votos nulos - ${votos.nulo.toLocaleString("pt-BR")}`, fonte: "F2" }]
+    );
+    const porPagina = 42;
+    const blocos = [];
+    let bloco = [];
+    grupos.forEach((grupo) => {
+      if (bloco.length && bloco.length + grupo.length > porPagina) {
+        blocos.push(bloco);
+        bloco = [];
+      }
+      bloco.push(...grupo);
+    });
+    if (bloco.length) blocos.push(bloco);
+    blocos.forEach((linhas, indiceBloco) => {
+      paginas.push({
+        cargo: cargo.nome,
+        continuacao: indiceBloco > 0,
+        linhas,
+        resumo: `Simulações concluídas: ${apuracao.sessoes.toLocaleString("pt-BR")} | Votos neste cargo: ${totalCargo.toLocaleString("pt-BR")} | Em candidaturas: ${votosCandidaturas.toLocaleString("pt-BR")}`,
+        geradoEm
+      });
+    });
+  }
+  return paginas;
+}
+
+/** Gera um documento PDF paginado e binário, sem bibliotecas ou serviços externos. */
+function criarPdfResultados(apuracao, data = new Date()) {
+  const dataFormatada = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(data);
+  const paginas = criarPaginasResultadosPdf(apuracao, dataFormatada);
+  const idFonteNormal = 3 + paginas.length * 2;
+  const idFonteNegrito = idFonteNormal + 1;
   const objetos = [
-    "<< /Type /Catalog /Pages 2 0 R >>",
-    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
-    `<< /Length ${comandos.length} >>\nstream\n${comandos}\nendstream`,
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
+    "<< /Type /Catalog /Pages 2 0 R /Lang (pt-BR) >>",
+    `<< /Type /Pages /Kids [${paginas.map((_, indice) => `${3 + indice * 2} 0 R`).join(" ")}] /Count ${paginas.length} >>`
   ];
-  let pdf = "%PDF-1.4\n";
+  paginas.forEach((pagina, indicePagina) => {
+    const comandos = [
+      `BT /F2 15 Tf 1 0 0 1 48 796 Tm (${escaparTextoPdf("URNA ESCOLA - RESULTADO DA SIMULAÇÃO")}) Tj ET`,
+      `BT /F2 12 Tf 1 0 0 1 48 772 Tm (${escaparTextoPdf(`${pagina.cargo}${pagina.continuacao ? " - continuação" : ""}`)}) Tj ET`,
+      `BT /F1 9 Tf 1 0 0 1 48 750 Tm (${escaparTextoPdf(pagina.resumo)}) Tj ET`,
+      `BT /F1 8 Tf 1 0 0 1 48 733 Tm (${escaparTextoPdf(`Gerado em: ${pagina.geradoEm}`)}) Tj ET`,
+      "0.75 w 0.65 G 48 720 m 547 720 l S 0 G"
+    ];
+    pagina.linhas.forEach((linha, indiceLinha) => {
+      comandos.push(`BT /${linha.fonte} 10 Tf 1 0 0 1 48 ${698 - indiceLinha * 14} Tm (${escaparTextoPdf(linha.texto)}) Tj ET`);
+    });
+    comandos.push(
+      "0.5 w 0.75 G 48 54 m 547 54 l S 0 G",
+      `BT /F1 8 Tf 1 0 0 1 48 36 Tm (${escaparTextoPdf("Simulador educativo não oficial - dados salvos somente neste navegador")}) Tj ET`,
+      `BT /F1 8 Tf 1 0 0 1 500 36 Tm (${escaparTextoPdf(`${indicePagina + 1}/${paginas.length}`)}) Tj ET`
+    );
+    const fluxo = comandos.join("\n");
+    objetos.push(
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${idFonteNormal} 0 R /F2 ${idFonteNegrito} 0 R >> >> /Contents ${4 + indicePagina * 2} 0 R >>`,
+      `<< /Length ${fluxo.length} >>\nstream\n${fluxo}\nendstream`
+    );
+  });
+  objetos.push(
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"
+  );
+  let pdf = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
   const offsets = [0];
   objetos.forEach((objeto, indice) => {
     offsets.push(pdf.length);
@@ -476,12 +589,14 @@ function exportarResultadosPdf() {
   pdf += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`;
   offsets.slice(1).forEach((offset) => { pdf += `${String(offset).padStart(10, "0")} 00000 n \n`; });
   pdf += `trailer\n<< /Size ${objetos.length + 1} /Root 1 0 R >>\nstartxref\n${inicioXref}\n%%EOF`;
-  const url = URL.createObjectURL(new Blob([pdf], { type: "application/pdf" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `resultado-${id}-urna-escola-sp-2026.pdf`;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return Uint8Array.from(pdf, (caractere) => caractere.charCodeAt(0));
+}
+
+/** Exporta a apuração completa em PDF, com uma seção paginada para cada cargo. */
+function exportarResultadosPdf() {
+  const pdf = criarPdfResultados(lerApuracao());
+  baixarArquivo(new Blob([pdf], { type: "application/pdf" }), "resultado-urna-escola-sp-2026.pdf");
+  mostrarToast("Arquivo PDF preparado para download.");
 }
 
 /** Traduz teclas do computador em ações da urna, respeitando campos de texto e diálogos. */
