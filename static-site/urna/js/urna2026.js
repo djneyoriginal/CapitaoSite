@@ -1,15 +1,19 @@
 "use strict";
 
-/* Simulação educativa dos cargos cadastrados para São Paulo em 2026. */
+/* Votação da Urna Escola com os cargos cadastrados para São Paulo em 2026. */
 /** As fontes de dados são carregadas antes desta lógica pela ordem dos scripts defer. */
 const dados = window.URNA_DADOS_SP;
 const dadosGovernador = window.URNA_DADOS_GOVERNADOR;
 const presidencia = window.URNA_CONFIG;
-/** Chave da apuração local. Os tempos abaixo estão em milissegundos. */
+/** Chave dos resultados salvos. Os tempos abaixo estão em milissegundos. */
 const CHAVE = "urna-escola-sp-2026-seis-votos-v2";
 const DURACAO_FIM = 5000;
 const TEMPO_CONFERENCIA = 1000;
 const LIMITE_GUIA = 40;
+const COLIGACOES_CURTAS = Object.freeze({
+  "CORAGEM PARA SEGUIR AVANÇANDO": "Coragem e Avanço",
+  "DESPERTA SÃO PAULO": "Desperta SP"
+});
 
 /** Define as candidaturas ativas; registros inaptos não entram na urna nem na legenda. */
 function podeVotar(candidato) {
@@ -29,7 +33,7 @@ const cargos = {
     candidates: presidencia.candidatos
   }
 };
-/** Converte os registros brutos em instâncias das classes ensinadas na aula. */
+/** Converte os registros brutos em instâncias das classes de cada cargo. */
 for (const [id, cargo] of Object.entries(cargos)) {
   const ClasseDoCargo = window.URNA_CLASSES[id];
   cargo.candidates = cargo.candidates
@@ -98,7 +102,7 @@ function criarApuracao() {
   };
 }
 
-/** Recupera somente contadores inteiros válidos do navegador; ignora dados locais corrompidos. */
+/** Recupera somente contadores inteiros válidos; ignora dados corrompidos. */
 function lerApuracao() {
   const apuracao = criarApuracao();
   try {
@@ -115,10 +119,10 @@ function lerApuracao() {
   return apuracao;
 }
 
-/** Persiste os totais neste navegador e avisa caso o armazenamento esteja indisponível. */
+/** Persiste os totais e avisa caso o armazenamento esteja indisponível. */
 function salvarApuracao(apuracao) {
   try { localStorage.setItem(CHAVE, JSON.stringify(apuracao)); }
-  catch (_) { mostrarToast("O navegador não permitiu guardar a apuração local."); }
+  catch (_) { mostrarToast("Não foi possível salvar os resultados."); }
 }
 
 /** Converte a digitação em candidato, branco ou nulo; impede repetir senador na segunda vaga. */
@@ -145,7 +149,7 @@ function iniciar() {
     "keyHint", "blankButton", "correctButton", "confirmButton", "guideOffice",
     "candidateSearch", "candidateGuide", "guideCount", "guideMore", "guideSource",
     "soundButton", "fullscreenButton", "resultsButton", "resultsDialog",
-    "resultsOffice", "resultsList", "dragonReward", "dragonWinner", "totalVotes", "validVotes", "resetButton",
+    "resultsOffice", "resultsList", "totalVotes", "validVotes", "resetButton",
     "exportButton", "exportPdfButton", "toast", "announcer"
   ].forEach((id) => { elementos[id] = document.getElementById(id); });
 
@@ -243,7 +247,7 @@ function confirmar() {
     estado.fase = "fim";
     tocarSequencia([[740, .09], [880, .09], [740, .09], [880, .09], [1040, .24]]);
     renderizar();
-    anunciar("Fim. Simulação concluída.");
+    anunciar("Fim. Votação concluída.");
     estado.temporizadorFim = setTimeout(iniciarNovaSessao, DURACAO_FIM);
     return;
   }
@@ -256,7 +260,7 @@ function confirmar() {
   anunciar(`Próxima escolha: ${etapas[estado.etapa].titulo}. Digite ${obterCargoAtual().digitos} números.`);
 }
 
-/** Soma as seis escolhas aos totais locais e conta uma simulação concluída. */
+/** Soma as seis escolhas aos totais e conta uma votação concluída. */
 function registrarSessao() {
   const apuracao = lerApuracao();
   estado.escolhas.forEach((escolha) => {
@@ -281,7 +285,7 @@ function iniciarNovaSessao() {
   estado.guiaLimite = LIMITE_GUIA;
   renderizar();
   renderizarGuia();
-  anunciar("Nova simulação iniciada. Digite 4 números para deputado federal.");
+  anunciar("Nova votação iniciada. Digite 4 números para deputado federal.");
 }
 
 /** Projeta o estado na tela: dígitos, foto ou avatar, branco, nulo e mensagens de conferência. */
@@ -314,7 +318,8 @@ function renderizar() {
   elementos.blankVote.hidden = escolha?.tipo !== "branco";
   if (candidato) {
     elementos.candidateName.textContent = candidato.nome.toUpperCase();
-    elementos.candidateProject.textContent = [candidato.partido, candidato.coligacao].filter(Boolean).join(" · ").toUpperCase();
+    elementos.candidateProject.textContent = legendaResumida(candidato);
+    elementos.candidateProject.title = legendaCompleta(candidato);
     const usaAvatarGenerico = !candidato.foto;
     elementos.candidatePhoto.src = candidato.avatar;
     elementos.candidatePhoto.alt = usaAvatarGenerico
@@ -342,6 +347,22 @@ function escapar(texto) {
   })[caractere]);
 }
 
+/** Preserva o nome completo da legenda para consulta sob demanda. */
+function legendaCompleta(candidato) {
+  return [candidato.partido, candidato.coligacao].filter(Boolean).join(" · ");
+}
+
+/** Mostra as siglas das federações e uma forma curta das coligações. */
+function legendaResumida(candidato) {
+  const partido = String(candidato.partido || "").trim();
+  const siglas = [...partido.matchAll(/(?:\(|\/)\d+-([^/)]+)/g)]
+    .map((trecho) => trecho[1].trim().replace(/\bPC\s+do\s+B\b/i, "PCdoB"));
+  if (siglas.length > 1) return siglas.join("/");
+  const legenda = COLIGACOES_CURTAS[partido] || partido;
+  if (!candidato.coligacao) return legenda;
+  return `${legenda} · ${COLIGACOES_CURTAS[candidato.coligacao] || candidato.coligacao}`;
+}
+
 /** Filtra candidaturas ativas e exibe um lote por vez para manter leve a lista de consulta. */
 function renderizarGuia() {
   const id = elementos.guideOffice.value;
@@ -350,12 +371,12 @@ function renderizarGuia() {
   const encontrados = cargo.candidates.filter((candidato) =>
     semAcentos(`${candidato.nome} ${candidato.numero} ${candidato.partido} ${candidato.coligacao || ""}`).includes(busca));
   const exibidos = encontrados.slice(0, estado.guiaLimite);
-  elementos.guideCount.textContent = `${encontrados.length.toLocaleString("pt-BR")} candidaturas · exibindo ${exibidos.length.toLocaleString("pt-BR")}`;
+  elementos.guideCount.textContent = `${encontrados.length.toLocaleString("pt-BR")} ${encontrados.length === 1 ? "candidatura" : "candidaturas"} · exibindo ${exibidos.length.toLocaleString("pt-BR")}`;
   elementos.candidateGuide.innerHTML = exibidos.map((candidato) => `
     <article class="guide-card" data-candidate-id="${escapar(candidato.id)}">
       <span class="guide-number">${escapar(candidato.numero)}</span>
       <img class="guide-avatar" src="${escapar(candidato.avatar)}" alt="" loading="lazy">
-      <span class="guide-copy"><strong>${escapar(candidato.nome)}</strong><small>${escapar(candidato.partido)}${candidato.coligacao ? ` · ${escapar(candidato.coligacao)}` : ""}</small></span>
+      <span class="guide-copy"><strong>${escapar(candidato.nome)}</strong><small title="${escapar(legendaCompleta(candidato))}">${escapar(legendaResumida(candidato))}</small></span>
     </article>`).join("");
   elementos.candidateGuide.querySelectorAll(".guide-avatar").forEach((imagem) => {
     imagem.addEventListener("error", () => { imagem.src = "assets/avatar-generico.svg"; }, { once: true });
@@ -382,7 +403,7 @@ function abrirResultados() {
   else elementos.resultsDialog.setAttribute("open", "");
 }
 
-/** Ordena os votos por cargo e mostra as sete esferas apenas para um líder isolado com votos. */
+/** Ordena os votos por cargo e atualiza o painel. */
 function renderizarResultados() {
   const apuracao = lerApuracao();
   const id = elementos.resultsOffice.value;
@@ -394,9 +415,6 @@ function renderizarResultados() {
     .filter((candidato) => votos[candidato.numero] > 0)
     .map((candidato) => ({ numero: candidato.numero, nome: candidato.nome, votos: votos[candidato.numero] }))
     .sort((a, b) => b.votos - a.votos || a.nome.localeCompare(b.nome, "pt-BR"));
-  const lider = linhas.length > 1 && linhas[0].votos === linhas[1].votos ? null : linhas[0] || null;
-  elementos.dragonReward.hidden = !lider;
-  elementos.dragonWinner.textContent = lider ? lider.nome : "";
   linhas.push({ numero: "—", nome: "Votos em branco", votos: votos.branco },
               { numero: "—", nome: "Votos nulos", votos: votos.nulo });
   const maior = Math.max(...linhas.map((linha) => linha.votos), 1);
@@ -409,12 +427,12 @@ function renderizarResultados() {
     </div>`).join("");
 }
 
-/** Pede confirmação antes de apagar os totais salvos neste navegador. */
+/** Pede confirmação antes de apagar os resultados salvos. */
 function zerarResultados() {
-  if (!window.confirm("Zerar todos os votos desta atividade neste navegador?")) return;
+  if (!window.confirm("Zerar todos os resultados?")) return;
   localStorage.removeItem(CHAVE);
   renderizarResultados();
-  mostrarToast("Apuração local zerada.");
+  mostrarToast("Resultados zerados.");
 }
 
 /** Inicia um download por Blob com um link temporário anexado ao documento. */
@@ -432,16 +450,17 @@ function baixarArquivo(blob, nomeArquivo) {
   }, 10000);
 }
 
-/** Cria um CSV dos totais locais, com separador de ponto e vírgula e texto entre aspas. */
+/** Cria um CSV dos resultados, com separador de ponto e vírgula e texto entre aspas. */
 function exportarResultados() {
   const apuracao = lerApuracao();
-  const linhas = [["cargo", "numero", "candidato ou opcao", "partido", "votos"]];
+  const linhas = [["cargo", "numero", "candidato", "legenda", "votos"]];
   for (const [id, cargo] of Object.entries(cargos)) {
     for (const candidato of candidatosPorNumero[id].values()) {
-      linhas.push([cargo.nome, candidato.numero, candidato.nome, candidato.partido, apuracao.cargos[id][candidato.numero]]);
+      const votos = apuracao.cargos[id][candidato.numero];
+      if (votos > 0) linhas.push([cargo.nome, candidato.numero, candidato.nome, legendaResumida(candidato), votos]);
     }
-    linhas.push([cargo.nome, "", "Votos em branco", "", apuracao.cargos[id].branco]);
-    linhas.push([cargo.nome, "", "Votos nulos", "", apuracao.cargos[id].nulo]);
+    linhas.push([cargo.nome, "", "Brancos", "", apuracao.cargos[id].branco]);
+    linhas.push([cargo.nome, "", "Nulos", "", apuracao.cargos[id].nulo]);
   }
   const csv = "\uFEFF" + linhas.map((linha) => linha.map((valor) =>
     `"${String(valor).replaceAll('"', '""')}"`).join(";")).join("\r\n");
@@ -508,16 +527,15 @@ function criarPaginasResultadosPdf(apuracao, geradoEm) {
     const votosCandidaturas = candidatos.reduce((total, item) => total + item.votos, 0);
     const totalCargo = votosCandidaturas + votos.branco + votos.nulo;
     const grupos = [];
-    if (!candidatos.length) grupos.push([{ texto: "Nenhum voto em candidatura neste cargo.", fonte: "F1" }]);
+    if (!candidatos.length) grupos.push([{ texto: "Sem votos em candidaturas.", fonte: "F1" }]);
     candidatos.forEach(({ candidato, votos: quantidade }) => {
-      const rotulo = quantidade === 1 ? "voto" : "votos";
-      const grupo = quebrarTextoPdf(`${candidato.numero} - ${candidato.nome} (${candidato.partido}) - ${quantidade.toLocaleString("pt-BR")} ${rotulo}`)
+      const grupo = quebrarTextoPdf(`${candidato.numero} - ${candidato.nome} | ${legendaResumida(candidato)} | ${quantidade.toLocaleString("pt-BR")}`)
         .map((texto, indice) => ({ texto: `${indice ? "    " : ""}${texto}`, fonte: "F1" }));
       grupos.push(grupo);
     });
     grupos.push(
-      [{ texto: `Votos em branco - ${votos.branco.toLocaleString("pt-BR")}`, fonte: "F2" }],
-      [{ texto: `Votos nulos - ${votos.nulo.toLocaleString("pt-BR")}`, fonte: "F2" }]
+      [{ texto: `Brancos: ${votos.branco.toLocaleString("pt-BR")}`, fonte: "F2" }],
+      [{ texto: `Nulos: ${votos.nulo.toLocaleString("pt-BR")}`, fonte: "F2" }]
     );
     const porPagina = 42;
     const blocos = [];
@@ -535,7 +553,7 @@ function criarPaginasResultadosPdf(apuracao, geradoEm) {
         cargo: cargo.nome,
         continuacao: indiceBloco > 0,
         linhas,
-        resumo: `Simulações concluídas: ${apuracao.sessoes.toLocaleString("pt-BR")} | Votos neste cargo: ${totalCargo.toLocaleString("pt-BR")} | Em candidaturas: ${votosCandidaturas.toLocaleString("pt-BR")}`,
+        resumo: `Votações: ${apuracao.sessoes.toLocaleString("pt-BR")} | Votos: ${totalCargo.toLocaleString("pt-BR")} | Em candidaturas: ${votosCandidaturas.toLocaleString("pt-BR")}`,
         geradoEm
       });
     });
@@ -555,7 +573,7 @@ function criarPdfResultados(apuracao, data = new Date()) {
   ];
   paginas.forEach((pagina, indicePagina) => {
     const comandos = [
-      `BT /F2 15 Tf 1 0 0 1 48 796 Tm (${escaparTextoPdf("URNA ESCOLA - RESULTADO DA SIMULAÇÃO")}) Tj ET`,
+      `BT /F2 15 Tf 1 0 0 1 48 796 Tm (${escaparTextoPdf("URNA ESCOLA - RESULTADOS")}) Tj ET`,
       `BT /F2 12 Tf 1 0 0 1 48 772 Tm (${escaparTextoPdf(`${pagina.cargo}${pagina.continuacao ? " - continuação" : ""}`)}) Tj ET`,
       `BT /F1 9 Tf 1 0 0 1 48 750 Tm (${escaparTextoPdf(pagina.resumo)}) Tj ET`,
       `BT /F1 8 Tf 1 0 0 1 48 733 Tm (${escaparTextoPdf(`Gerado em: ${pagina.geradoEm}`)}) Tj ET`,
@@ -566,7 +584,7 @@ function criarPdfResultados(apuracao, data = new Date()) {
     });
     comandos.push(
       "0.5 w 0.75 G 48 54 m 547 54 l S 0 G",
-      `BT /F1 8 Tf 1 0 0 1 48 36 Tm (${escaparTextoPdf("Simulador educativo não oficial - dados salvos somente neste navegador")}) Tj ET`,
+      `BT /F1 8 Tf 1 0 0 1 48 36 Tm (${escaparTextoPdf("Projeto independente - não oficial")}) Tj ET`,
       `BT /F1 8 Tf 1 0 0 1 500 36 Tm (${escaparTextoPdf(`${indicePagina + 1}/${paginas.length}`)}) Tj ET`
     );
     const fluxo = comandos.join("\n");

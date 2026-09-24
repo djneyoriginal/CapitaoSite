@@ -5,7 +5,7 @@
  * Esta lista ainda não foi substituída por uma exportação oficial do TSE.
  * numero é texto para preservar dígitos; foto é um caminho relativo ao HTML.
  * situacao descreve a disputa; status descreve o registro informado pela fonte.
- * votavel bloqueia explicitamente a candidatura no simulador.
+ * votavel bloqueia explicitamente a candidatura na urna.
  * Object.freeze evita mudanças acidentais nos registros durante a execução.
  */
 window.URNA_CONFIG = Object.freeze({
